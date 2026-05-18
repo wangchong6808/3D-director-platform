@@ -10,6 +10,8 @@ function SceneContent() {
   const selectedId = useSceneStore(s => s.selectedId);
   const tool = useSceneStore(s => s.tool);
   const showGrid = useSceneStore(s => s.showGrid);
+  const groundColor = useSceneStore(s => s.groundColor);
+  const gridColor = useSceneStore(s => s.gridColor);
   const selectObject = useSceneStore(s => s.selectObject);
   const updateTransform = useSceneStore(s => s.updateTransform);
   const saveHistory = useSceneStore(s => s.saveHistory);
@@ -56,7 +58,7 @@ function SceneContent() {
     <>
       <ambientLight intensity={0.4} />
       <directionalLight position={[10, 10, 5]} intensity={1} castShadow />
-      {showGrid && <Grid infiniteGrid cellSize={1} cellThickness={0.5} sectionSize={5} sectionThickness={1} fadeDistance={50} />}
+      {showGrid && <Grid infiniteGrid cellSize={1} cellThickness={0.5} sectionSize={5} sectionThickness={1} fadeDistance={50} cellColor={gridColor} sectionColor={gridColor} />}
       <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
         <GizmoViewport />
       </GizmoHelper>
@@ -88,6 +90,13 @@ function SceneContent() {
           onObjectChange={handleTransform}
         />
       )}
+      <mesh
+        position={[0, -0.005, 0]}
+        rotation={[-Math.PI / 2, 0, 0]}
+      >
+        <planeGeometry args={[1000, 1000]} />
+        <meshBasicMaterial color={groundColor} />
+      </mesh>
       <mesh
         onClick={() => selectObject(null)}
         position={[0, -0.01, 0]}

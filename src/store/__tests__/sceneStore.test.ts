@@ -100,6 +100,64 @@ describe('SCN-ADD: addObject', () => {
     const names = useSceneStore.getState().objects.map(o => o.name);
     expect(new Set(names).size).toBe(3);
   });
+
+  it('SCN-ADD-011: 连续添加同类型物体时名称递增', () => {
+    const { addObject } = useSceneStore.getState();
+    addObject('box');
+    addObject('box');
+    addObject('box');
+    const names = useSceneStore.getState().objects.map(o => o.name);
+    expect(names).toEqual(['box_1', 'box_2', 'box_3']);
+  });
+
+  it('SCN-ADD-012: 混合添加不同类型物体时各自独立计数', () => {
+    const { addObject } = useSceneStore.getState();
+    addObject('box');
+    addObject('sphere');
+    addObject('box');
+    addObject('sphere');
+    const names = useSceneStore.getState().objects.map(o => o.name);
+    expect(names).toEqual(['box_1', 'sphere_1', 'box_2', 'sphere_2']);
+  });
+
+  it('SCN-ADD-013: 删除物体后继续计数使用最大编号', () => {
+    const { addObject, removeObject } = useSceneStore.getState();
+    addObject('box'); // box_1
+    addObject('box'); // box_2
+    addObject('box'); // box_3
+    const obj2 = useSceneStore.getState().objects[1];
+    removeObject(obj2.id); // remove box_2
+    addObject('box'); // should be box_4 (max was 3)
+    const names = useSceneStore.getState().objects.map(o => o.name);
+    expect(names).toEqual(['box_1', 'box_3', 'box_4']);
+  });
+
+  it('SCN-ADD-014: 用户手动改名后不影响增量计数', () => {
+    const { addObject, updateObject } = useSceneStore.getState();
+    addObject('box'); // box_1
+    const obj = useSceneStore.getState().objects[0];
+    updateObject(obj.id, { name: '自定义名称' });
+    addObject('box');
+    const names = useSceneStore.getState().objects.map(o => o.name);
+    expect(names).toEqual(['自定义名称', 'box_1']);
+  });
+
+  it('SCN-ADD-015: 所有种类物体名称唯一性', () => {
+    const kinds = ['box', 'sphere', 'cylinder', 'cone', 'torus', 'person', 'house', 'table', 'chair', 'cup', 'tree', 'car', 'sofa', 'bed', 'fence'] as const;
+    const { addObject } = useSceneStore.getState();
+    for (const kind of kinds) {
+      addObject(kind);
+      addObject(kind);
+    }
+    const names = useSceneStore.getState().objects.map(o => o.name);
+    // All names should be unique
+    expect(new Set(names).size).toBe(names.length);
+    // Each pair should be kind_1, kind_2
+    for (let i = 0; i < kinds.length; i++) {
+      expect(names[i * 2]).toBe(`${kinds[i]}_1`);
+      expect(names[i * 2 + 1]).toBe(`${kinds[i]}_2`);
+    }
+  });
 });
 
 describe('SCN-DEL: removeObject', () => {

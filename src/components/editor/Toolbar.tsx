@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { Button, Space, Dropdown, Tooltip, Divider } from 'antd';
+import { Button, Space, Dropdown, Tooltip, Divider, ColorPicker, Typography } from 'antd';
 import type { MenuProps } from 'antd';
 import {
   ScanOutlined, ExpandOutlined, DragOutlined,
@@ -37,11 +37,17 @@ const OBJECT_TYPES: { kind: ObjectKind; label: string; group: string }[] = [
   { kind: 'fence', label: '栅栏', group: '常见物体' },
 ];
 
+const { Text } = Typography;
+
 export default function Toolbar() {
   const tool = useSceneStore(s => s.tool);
   const setTool = useSceneStore(s => s.setTool);
   const showGrid = useSceneStore(s => s.showGrid);
   const toggleGrid = useSceneStore(s => s.toggleGrid);
+  const groundColor = useSceneStore(s => s.groundColor);
+  const gridColor = useSceneStore(s => s.gridColor);
+  const setGroundColor = useSceneStore(s => s.setGroundColor);
+  const setGridColor = useSceneStore(s => s.setGridColor);
   const historyIndex = useSceneStore(s => s.historyIndex);
   const history = useSceneStore(s => s.history);
   const undo = useSceneStore(s => s.undo);
@@ -159,6 +165,23 @@ export default function Toolbar() {
           onClick={toggleGrid}
         >网格</Button>
       </Tooltip>
+
+      <Divider type="vertical" />
+
+      <Space size={4}>
+        <Text style={{ color: '#999', fontSize: 11 }}>地面</Text>
+        <ColorPicker
+          value={groundColor}
+          onChange={(_, hex) => setGroundColor(hex)}
+          size="small"
+        />
+        <Text style={{ color: '#999', fontSize: 11 }}>网格线</Text>
+        <ColorPicker
+          value={gridColor}
+          onChange={(_, hex) => setGridColor(hex)}
+          size="small"
+        />
+      </Space>
 
       <Divider type="vertical" />
 

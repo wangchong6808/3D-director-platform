@@ -79,6 +79,37 @@ function ScaleControls({ object }: { object: SceneObject }) {
   );
 }
 
+function ObjectPropertyEditor({ object }: { object: SceneObject }) {
+  const store = useCreateStore();
+  return (
+    <>
+      <LevaPanel
+        store={store}
+        flat
+        fill
+        collapsed={false}
+        theme={{
+          colors: {
+            elevation1: '#181818',
+            elevation2: '#222222',
+            elevation3: '#2a2a2a',
+            accent1: '#1677ff',
+            accent2: '#4096ff',
+            accent3: '#69b1ff',
+            highlight1: '#555',
+            highlight2: '#777',
+            highlight3: '#999',
+            vivid1: '#ff4d4f',
+            folderWidgetColor: '#aaa',
+            folderTextColor: '#ddd',
+          },
+        }}
+      />
+      <ObjectControls object={object} store={store} />
+    </>
+  );
+}
+
 function ObjectControls({ object, store }: { object: SceneObject; store: ReturnType<typeof useCreateStore> }) {
   const updateObject = useSceneStore(s => s.updateObject);
   const updateTransform = useSceneStore(s => s.updateTransform);
@@ -116,11 +147,23 @@ function ObjectControls({ object, store }: { object: SceneObject; store: ReturnT
     }, 300);
   }
 
+  function withHistoryNoGuard(fn: () => void) {
+    if (!savingHistory.current) {
+      savingHistory.current = true;
+      saveHistory();
+    }
+    fn();
+    clearTimeout(batchTimer.current);
+    batchTimer.current = setTimeout(() => {
+      savingHistory.current = false;
+    }, 300);
+  }
+
   useControls(() => ({
     '基本信息': folder({
       name: {
         value: object.name,
-        onChange: (v: string) => withHistory(() => updateObject(object.id, { name: v })),
+        onChange: (v: string) => withHistoryNoGuard(() => updateObject(object.id, { name: v })),
       },
       kind: {
         value: object.kind,
@@ -162,15 +205,15 @@ function ObjectControls({ object, store }: { object: SceneObject; store: ReturnT
     '外观': folder({
       color: {
         value: object.color,
-        onChange: (v: string) => withHistory(() => updateObject(object.id, { color: v })),
+        onChange: (v: string) => withHistoryNoGuard(() => updateObject(object.id, { color: v })),
       },
       visible: {
         value: object.visible,
-        onChange: (v: boolean) => withHistory(() => updateObject(object.id, { visible: v })),
+        onChange: (v: boolean) => withHistoryNoGuard(() => updateObject(object.id, { visible: v })),
       },
       locked: {
         value: object.locked,
-        onChange: (v: boolean) => withHistory(() => updateObject(object.id, { locked: v })),
+        onChange: (v: boolean) => withHistoryNoGuard(() => updateObject(object.id, { locked: v })),
       },
     }),
     '遮挡': folder({
@@ -187,36 +230,12 @@ function ObjectControls({ object, store }: { object: SceneObject; store: ReturnT
 export default function PropertyPanel() {
   const selectedId = useSceneStore(s => s.selectedId);
   const selectedObj = useSceneStore(s => s.objects.find(o => o.id === selectedId));
-  const store = useCreateStore();
 
   return (
     <div style={{ height: '100%', overflow: 'auto', background: '#181818' }}>
       {selectedId && selectedObj ? (
         <>
-          <LevaPanel
-            key={selectedObj.id}
-            store={store}
-            flat
-            fill
-            collapsed={false}
-            theme={{
-              colors: {
-                elevation1: '#181818',
-                elevation2: '#222222',
-                elevation3: '#2a2a2a',
-                accent1: '#1677ff',
-                accent2: '#4096ff',
-                accent3: '#69b1ff',
-                highlight1: '#555',
-                highlight2: '#777',
-                highlight3: '#999',
-                vivid1: '#ff4d4f',
-                folderWidgetColor: '#aaa',
-                folderTextColor: '#ddd',
-              },
-            }}
-          />
-          <ObjectControls object={selectedObj} store={store} />
+          <ObjectPropertyEditor key={selectedObj.id} object={selectedObj} />
           <div style={{
             borderTop: '1px solid #333',
             margin: '0 0 0 0',

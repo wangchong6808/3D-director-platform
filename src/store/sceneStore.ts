@@ -31,6 +31,8 @@ interface SceneStore {
   selectedId: string | null;
   tool: EditorTool;
   showGrid: boolean;
+  groundColor: string;
+  gridColor: string;
   sceneName: string;
   history: SceneObject[][];
   historyIndex: number;
@@ -43,6 +45,8 @@ interface SceneStore {
   saveHistory: () => void;
   setTool: (tool: EditorTool) => void;
   toggleGrid: () => void;
+  setGroundColor: (color: string) => void;
+  setGridColor: (color: string) => void;
   undo: () => void;
   redo: () => void;
   bringToFront: (id: string) => void;
@@ -69,6 +73,8 @@ export const useSceneStore = create<SceneStore>((set, get) => ({
   selectedId: null,
   tool: 'translate',
   showGrid: true,
+  groundColor: '#2d2d2d',
+  gridColor: '#444444',
   sceneName: 'untitled',
   history: [[]],
   historyIndex: 0,
@@ -152,6 +158,8 @@ export const useSceneStore = create<SceneStore>((set, get) => ({
   setTool: (tool) => set({ tool }),
 
   toggleGrid: () => set(state => ({ showGrid: !state.showGrid })),
+  setGroundColor: (color) => set({ groundColor: color }),
+  setGridColor: (color) => set({ gridColor: color }),
 
   undo: () => {
     const { history, historyIndex } = get();
