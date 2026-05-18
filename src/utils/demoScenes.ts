@@ -1,166 +1,116 @@
-import type { SceneObject } from '../types';
+import type { SceneData } from '../types';
 
-let _seq = 0;
-const uid = (prefix: string) => `${prefix}_${++_seq}_${Date.now()}`;
-
-interface ObjOpts {
-  rotation?: [number, number, number];
-  scale?: [number, number, number];
-  renderOrder?: number;
-}
-
-const obj = (
-  name: string,
-  primitiveType: SceneObject['primitiveType'],
-  color: string,
-  position: [number, number, number],
-  opts?: ObjOpts
-): SceneObject => ({
-  id: uid(name),
-  name,
-  gltfUrl: '',
-  primitiveType,
-  color,
-  renderOrder: opts?.renderOrder ?? 0,
-  transform: {
-    position,
-    rotation: opts?.rotation ?? [0, 0, 0] as [number, number, number],
-    scale: opts?.scale ?? [1, 1, 1] as [number, number, number],
+export const demoScenes: Record<string, SceneData> = {
+  office: {
+    version: '1.0.0',
+    objects: [
+      { id: 'office-desk-1', name: '桌子_1', kind: 'table', position: { x: -2, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1.5, y: 1, z: 1 }, color: '#8B7355', visible: true, locked: false, occlusionIndex: 0 },
+      { id: 'office-desk-2', name: '桌子_2', kind: 'table', position: { x: 2, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1.5, y: 1, z: 1 }, color: '#8B7355', visible: true, locked: false, occlusionIndex: 1 },
+      { id: 'office-desk-3', name: '桌子_3', kind: 'table', position: { x: -2, y: 0, z: -3 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1.5, y: 1, z: 1 }, color: '#8B7355', visible: true, locked: false, occlusionIndex: 2 },
+      { id: 'office-desk-4', name: '桌子_4', kind: 'table', position: { x: 2, y: 0, z: -3 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1.5, y: 1, z: 1 }, color: '#8B7355', visible: true, locked: false, occlusionIndex: 3 },
+      { id: 'office-chair-1', name: '椅子_1', kind: 'chair', position: { x: -2, y: 0, z: 1 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#4A4A4A', visible: true, locked: false, occlusionIndex: 4 },
+      { id: 'office-chair-2', name: '椅子_2', kind: 'chair', position: { x: 2, y: 0, z: 1 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#4A4A4A', visible: true, locked: false, occlusionIndex: 5 },
+      { id: 'office-chair-3', name: '椅子_3', kind: 'chair', position: { x: -2, y: 0, z: -2 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#4A4A4A', visible: true, locked: false, occlusionIndex: 6 },
+      { id: 'office-chair-4', name: '椅子_4', kind: 'chair', position: { x: 2, y: 0, z: -2 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#4A4A4A', visible: true, locked: false, occlusionIndex: 7 },
+      { id: 'office-cup-1', name: '杯子_1', kind: 'cup', position: { x: -1.5, y: 1, z: 0.3 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 0.5, y: 0.5, z: 0.5 }, color: '#FFFFFF', visible: true, locked: false, occlusionIndex: 8 },
+      { id: 'office-cup-2', name: '杯子_2', kind: 'cup', position: { x: 2.5, y: 1, z: 0.3 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 0.5, y: 0.5, z: 0.5 }, color: '#FF6B6B', visible: true, locked: false, occlusionIndex: 9 },
+      { id: 'office-person-1', name: '人物_1', kind: 'person', position: { x: 0, y: 0, z: 2 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#4A90D9', visible: true, locked: false, occlusionIndex: 10 },
+      { id: 'office-person-2', name: '人物_2', kind: 'person', position: { x: 0, y: 0, z: -4 }, rotation: { x: 0, y: Math.PI, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#E85D75', visible: true, locked: false, occlusionIndex: 11 },
+      { id: 'office-partition-1', name: '隔断_1', kind: 'box', position: { x: -4, y: 1, z: -1.5 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 0.2, y: 2, z: 3 }, color: '#D4C5B9', visible: true, locked: false, occlusionIndex: 12 },
+      { id: 'office-partition-2', name: '隔断_2', kind: 'box', position: { x: 4, y: 1, z: -1.5 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 0.2, y: 2, z: 3 }, color: '#D4C5B9', visible: true, locked: false, occlusionIndex: 13 },
+    ],
+    metadata: { name: '办公室', createdAt: '', updatedAt: '' },
   },
-  visible: true,
-  locked: false,
-});
-
-export interface DemoSceneOption {
-  key: string;
-  label: string;
-  description: string;
-  create: () => { objects: SceneObject[]; camera: { position: [number, number, number]; target: [number, number, number]; zoom: number } };
-}
-
-export const DEMO_SCENES: DemoSceneOption[] = [
-  {
-    key: 'office',
-    label: '办公室',
-    description: '两人对坐办公，桌椅、杯具、文件柜',
-    create: () => ({
-      objects: [
-        obj('办公桌1', 'table', '#8b6914', [-1.5, 0, 0]),
-        obj('办公桌2', 'table', '#8b6914', [1.5, 0, 0]),
-        obj('椅子1', 'chair', '#a0522d', [-1.5, 0, 1]),
-        obj('椅子2', 'chair', '#a0522d', [1.5, 0, 1]),
-        obj('人物_员工A', 'person', '#e8966d', [-1.5, 0, -0.8]),
-        obj('人物_员工B', 'person', '#c47a5a', [1.5, 0, -0.8]),
-        obj('杯子1', 'cup', '#87ceeb', [-1.1, 0.7, 0.1]),
-        obj('杯子2', 'cup', '#87ceeb', [1.9, 0.7, 0.1]),
-        obj('文件柜', 'box', '#6b6b6b', [3.5, 0, -1], { scale: [0.8, 1.5, 0.5] }),
-        obj('盆栽', 'tree', '#228b22', [-3.5, 0, -1], { scale: [0.6, 0.6, 0.6] }),
-      ],
-      camera: { position: [5, 5, 5], target: [0, 0.5, 0], zoom: 1 },
-    }),
+  living_room: {
+    version: '1.0.0',
+    objects: [
+      { id: 'lr-sofa-1', name: '沙发_1', kind: 'sofa', position: { x: 0, y: 0, z: 3 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 2.5, y: 1, z: 1 }, color: '#6B8E7B', visible: true, locked: false, occlusionIndex: 0 },
+      { id: 'lr-table-1', name: '桌子_1', kind: 'table', position: { x: 0, y: 0, z: 1.5 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1.2, y: 0.8, z: 0.8 }, color: '#8B7355', visible: true, locked: false, occlusionIndex: 1 },
+      { id: 'lr-chair-1', name: '椅子_1', kind: 'chair', position: { x: -1, y: 0, z: 0.5 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#4A4A4A', visible: true, locked: false, occlusionIndex: 2 },
+      { id: 'lr-chair-2', name: '椅子_2', kind: 'chair', position: { x: 1, y: 0, z: 0.5 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#4A4A4A', visible: true, locked: false, occlusionIndex: 3 },
+      { id: 'lr-cabinet-1', name: '柜子_1', kind: 'box', position: { x: -3, y: 0.8, z: -2 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1.5, z: 0.6 }, color: '#C4A882', visible: true, locked: false, occlusionIndex: 4 },
+      { id: 'lr-cabinet-2', name: '柜子_2', kind: 'box', position: { x: 3, y: 0.8, z: -2 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1.5, z: 0.6 }, color: '#C4A882', visible: true, locked: false, occlusionIndex: 5 },
+    ],
+    metadata: { name: '客厅', createdAt: '', updatedAt: '' },
   },
-  {
-    key: 'living-room',
-    label: '客厅',
-    description: '沙发、茶几、电视柜，家庭日常场景',
-    create: () => ({
-      objects: [
-        obj('沙发', 'sofa', '#6b8e23', [0, 0, 2]),
-        obj('茶几', 'table', '#8b6914', [0, 0, 0.3], { scale: [0.8, 0.7, 0.6] }),
-        obj('杯子', 'cup', '#87ceeb', [0.2, 0.72, 0.3]),
-        obj('电视柜', 'box', '#5c4033', [0, 0, -2], { scale: [2, 0.6, 0.5] }),
-        obj('电视', 'box', '#1a1a1a', [0, 0.5, -2], { scale: [1.5, 0.9, 0.08] }),
-        obj('人物_主人', 'person', '#e8966d', [0, 0, 2.5]),
-        obj('台灯', 'cylinder', '#ffd700', [-1.8, 0, 1.5], { scale: [0.3, 0.6, 0.3] }),
-        obj('花瓶', 'cylinder', '#ff6347', [1.5, 0, 1.5], { scale: [0.25, 0.5, 0.25] }),
-        obj('地毯', 'box', '#8b4513', [0, 0.01, 1], { scale: [2.5, 0.02, 2], renderOrder: -1 }),
-      ],
-      camera: { position: [4, 4, 6], target: [0, 0.5, 0.5], zoom: 1 },
-    }),
+  street: {
+    version: '1.0.0',
+    objects: [
+      { id: 'st-house-1', name: '房子_1', kind: 'house', position: { x: -5, y: 0, z: 2 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 2, y: 2, z: 2 }, color: '#E8D5B7', visible: true, locked: false, occlusionIndex: 0 },
+      { id: 'st-house-2', name: '房子_2', kind: 'house', position: { x: 5, y: 0, z: 2 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 2, y: 2, z: 2 }, color: '#D4C5B9', visible: true, locked: false, occlusionIndex: 1 },
+      { id: 'st-car-1', name: '汽车_1', kind: 'car', position: { x: -2, y: 0, z: -2 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1.5, y: 1, z: 1 }, color: '#E85D75', visible: true, locked: false, occlusionIndex: 2 },
+      { id: 'st-car-2', name: '汽车_2', kind: 'car', position: { x: 3, y: 0, z: -3 }, rotation: { x: 0, y: 0.5, z: 0 }, scale: { x: 1.5, y: 1, z: 1 }, color: '#4A90D9', visible: true, locked: false, occlusionIndex: 3 },
+      { id: 'st-tree-1', name: '树木_1', kind: 'tree', position: { x: -7, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#2D5A27', visible: true, locked: false, occlusionIndex: 4 },
+      { id: 'st-tree-2', name: '树木_2', kind: 'tree', position: { x: 7, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#2D5A27', visible: true, locked: false, occlusionIndex: 5 },
+      { id: 'st-tree-3', name: '树木_3', kind: 'tree', position: { x: -7, y: 0, z: 4 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1.2, y: 1.2, z: 1.2 }, color: '#3A7A33', visible: true, locked: false, occlusionIndex: 6 },
+      { id: 'st-tree-4', name: '树木_4', kind: 'tree', position: { x: 7, y: 0, z: 4 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1.2, y: 1.2, z: 1.2 }, color: '#3A7A33', visible: true, locked: false, occlusionIndex: 7 },
+      { id: 'st-fence-1', name: '栅栏_1', kind: 'fence', position: { x: -6, y: 0, z: -4 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 2, y: 1, z: 1 }, color: '#8B7355', visible: true, locked: false, occlusionIndex: 8 },
+      { id: 'st-fence-2', name: '栅栏_2', kind: 'fence', position: { x: -2, y: 0, z: -4 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 2, y: 1, z: 1 }, color: '#8B7355', visible: true, locked: false, occlusionIndex: 9 },
+      { id: 'st-fence-3', name: '栅栏_3', kind: 'fence', position: { x: 2, y: 0, z: -4 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 2, y: 1, z: 1 }, color: '#8B7355', visible: true, locked: false, occlusionIndex: 10 },
+      { id: 'st-fence-4', name: '栅栏_4', kind: 'fence', position: { x: 6, y: 0, z: -4 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 2, y: 1, z: 1 }, color: '#8B7355', visible: true, locked: false, occlusionIndex: 11 },
+      { id: 'st-person-1', name: '人物_1', kind: 'person', position: { x: 0, y: 0, z: -1 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#4A90D9', visible: true, locked: false, occlusionIndex: 12 },
+    ],
+    metadata: { name: '街道', createdAt: '', updatedAt: '' },
   },
-  {
-    key: 'street',
-    label: '街道',
-    description: '城市街景，汽车、行人、树木、栅栏',
-    create: () => ({
-      objects: [
-        obj('汽车1', 'car', '#dc143c', [-2, 0, 1], { rotation: [0, 0.2, 0] }),
-        obj('汽车2', 'car', '#1e90ff', [3, 0, 1], { rotation: [0, 3.3, 0] }),
-        obj('人物_行人A', 'person', '#e8966d', [1, 0, -1]),
-        obj('人物_行人B', 'person', '#c47a5a', [-1, 0, -2]),
-        obj('树木1', 'tree', '#228b22', [-4, 0, -2]),
-        obj('树木2', 'tree', '#2e8b57', [4, 0, -2]),
-        obj('栅栏', 'fence', '#deb887', [0, 0, -3], { scale: [3, 1, 1] }),
-        obj('路灯', 'cylinder', '#708090', [2, 0, -1.5], { scale: [0.15, 2, 0.15] }),
-        obj('房子', 'house', '#d4a574', [-5, 0, -5], { scale: [1.5, 1.2, 1.2] }),
-        obj('路面', 'box', '#555555', [0, 0.01, 0], { scale: [12, 0.02, 4], renderOrder: -1 }),
-      ],
-      camera: { position: [6, 5, 6], target: [0, 0.5, 0], zoom: 1 },
-    }),
+  bedroom: {
+    version: '1.0.0',
+    objects: [
+      { id: 'bd-bed-1', name: '床_1', kind: 'bed', position: { x: 0, y: 0, z: 2 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 2, y: 1, z: 1.5 }, color: '#F5F0E8', visible: true, locked: false, occlusionIndex: 0 },
+      { id: 'bd-cabinet-1', name: '柜子_1', kind: 'box', position: { x: -3, y: 1, z: -2 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1.2, y: 2, z: 0.8 }, color: '#C4A882', visible: true, locked: false, occlusionIndex: 1 },
+      { id: 'bd-cabinet-2', name: '柜子_2', kind: 'box', position: { x: 3, y: 1, z: -2 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1.2, y: 2, z: 0.8 }, color: '#C4A882', visible: true, locked: false, occlusionIndex: 2 },
+      { id: 'bd-chair-1', name: '椅子_1', kind: 'chair', position: { x: 0, y: 0, z: -2 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#4A4A4A', visible: true, locked: false, occlusionIndex: 3 },
+      { id: 'bd-table-1', name: '桌子_1', kind: 'table', position: { x: 0, y: 0, z: -1 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 0.8, z: 0.6 }, color: '#8B7355', visible: true, locked: false, occlusionIndex: 4 },
+    ],
+    metadata: { name: '卧室', createdAt: '', updatedAt: '' },
   },
-  {
-    key: 'bedroom',
-    label: '卧室',
-    description: '床、床头柜、台灯，温馨私密空间',
-    create: () => ({
-      objects: [
-        obj('双人床', 'bed', '#daa520', [0, 0, 0]),
-        obj('床头柜1', 'box', '#8b6914', [-1.2, 0, -0.8], { scale: [0.4, 0.45, 0.4] }),
-        obj('床头柜2', 'box', '#8b6914', [1.2, 0, -0.8], { scale: [0.4, 0.45, 0.4] }),
-        obj('台灯1', 'cylinder', '#ffd700', [-1.2, 0.5, -0.8], { scale: [0.2, 0.35, 0.2] }),
-        obj('台灯2', 'cylinder', '#ffd700', [1.2, 0.5, -0.8], { scale: [0.2, 0.35, 0.2] }),
-        obj('椅子', 'chair', '#a0522d', [2, 0, 0.5]),
-        obj('人物_熟睡', 'person', '#e8966d', [0, 0, 0.2], { scale: [0.9, 0.5, 0.9] }),
-        obj('地毯', 'box', '#8b4513', [0, 0.01, 1.5], { scale: [2, 0.02, 1.5], renderOrder: -1 }),
-        obj('花瓶', 'cylinder', '#ff6347', [1.2, 0.5, -0.6], { scale: [0.15, 0.3, 0.15] }),
-      ],
-      camera: { position: [3, 3, 4], target: [0, 0.4, 0], zoom: 1 },
-    }),
+  park: {
+    version: '1.0.0',
+    objects: [
+      { id: 'pk-tree-1', name: '树木_1', kind: 'tree', position: { x: -6, y: 0, z: -3 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1.5, y: 1.5, z: 1.5 }, color: '#2D5A27', visible: true, locked: false, occlusionIndex: 0 },
+      { id: 'pk-tree-2', name: '树木_2', kind: 'tree', position: { x: -6, y: 0, z: 3 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1.2, y: 1.2, z: 1.2 }, color: '#3A7A33', visible: true, locked: false, occlusionIndex: 1 },
+      { id: 'pk-tree-3', name: '树木_3', kind: 'tree', position: { x: 6, y: 0, z: -3 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1.5, y: 1.5, z: 1.5 }, color: '#2D5A27', visible: true, locked: false, occlusionIndex: 2 },
+      { id: 'pk-tree-4', name: '树木_4', kind: 'tree', position: { x: 6, y: 0, z: 3 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1.2, y: 1.2, z: 1.2 }, color: '#3A7A33', visible: true, locked: false, occlusionIndex: 3 },
+      { id: 'pk-tree-5', name: '树木_5', kind: 'tree', position: { x: 0, y: 0, z: -6 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1.3, y: 1.3, z: 1.3 }, color: '#4A8A44', visible: true, locked: false, occlusionIndex: 4 },
+      { id: 'pk-tree-6', name: '树木_6', kind: 'tree', position: { x: 0, y: 0, z: 6 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1.3, y: 1.3, z: 1.3 }, color: '#4A8A44', visible: true, locked: false, occlusionIndex: 5 },
+      { id: 'pk-fence-1', name: '栅栏_1', kind: 'fence', position: { x: -8, y: 0, z: 0 }, rotation: { x: 0, y: Math.PI / 2, z: 0 }, scale: { x: 3, y: 1, z: 1 }, color: '#8B7355', visible: true, locked: false, occlusionIndex: 6 },
+      { id: 'pk-fence-2', name: '栅栏_2', kind: 'fence', position: { x: -5, y: 0, z: 5 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 2, y: 1, z: 1 }, color: '#8B7355', visible: true, locked: false, occlusionIndex: 7 },
+      { id: 'pk-fence-3', name: '栅栏_3', kind: 'fence', position: { x: -5, y: 0, z: -5 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 2, y: 1, z: 1 }, color: '#8B7355', visible: true, locked: false, occlusionIndex: 8 },
+      { id: 'pk-fence-4', name: '栅栏_4', kind: 'fence', position: { x: 5, y: 0, z: 5 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 2, y: 1, z: 1 }, color: '#8B7355', visible: true, locked: false, occlusionIndex: 9 },
+      { id: 'pk-fence-5', name: '栅栏_5', kind: 'fence', position: { x: 5, y: 0, z: -5 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 2, y: 1, z: 1 }, color: '#8B7355', visible: true, locked: false, occlusionIndex: 10 },
+      { id: 'pk-fence-6', name: '栅栏_6', kind: 'fence', position: { x: 8, y: 0, z: 0 }, rotation: { x: 0, y: Math.PI / 2, z: 0 }, scale: { x: 3, y: 1, z: 1 }, color: '#8B7355', visible: true, locked: false, occlusionIndex: 11 },
+      { id: 'pk-fence-7', name: '栅栏_7', kind: 'fence', position: { x: -2, y: 0, z: -7 }, rotation: { x: 0, y: Math.PI / 2, z: 0 }, scale: { x: 2, y: 1, z: 1 }, color: '#8B7355', visible: true, locked: false, occlusionIndex: 12 },
+      { id: 'pk-fence-8', name: '栅栏_8', kind: 'fence', position: { x: 2, y: 0, z: 7 }, rotation: { x: 0, y: Math.PI / 2, z: 0 }, scale: { x: 2, y: 1, z: 1 }, color: '#8B7355', visible: true, locked: false, occlusionIndex: 13 },
+      { id: 'pk-person-1', name: '人物_1', kind: 'person', position: { x: -3, y: 0, z: -2 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#4A90D9', visible: true, locked: false, occlusionIndex: 14 },
+      { id: 'pk-person-2', name: '人物_2', kind: 'person', position: { x: 3, y: 0, z: 2 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#E85D75', visible: true, locked: false, occlusionIndex: 15 },
+      { id: 'pk-chair-1', name: '椅子_1', kind: 'chair', position: { x: -2, y: 0, z: -4 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#6B8E7B', visible: true, locked: false, occlusionIndex: 16 },
+      { id: 'pk-chair-2', name: '椅子_2', kind: 'chair', position: { x: 0, y: 0, z: -4 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#6B8E7B', visible: true, locked: false, occlusionIndex: 17 },
+      { id: 'pk-chair-3', name: '椅子_3', kind: 'chair', position: { x: 2, y: 0, z: -4 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#6B8E7B', visible: true, locked: false, occlusionIndex: 18 },
+    ],
+    metadata: { name: '公园', createdAt: '', updatedAt: '' },
   },
-  {
-    key: 'park',
-    label: '公园',
-    description: '长椅、树木、人物，户外休闲场景',
-    create: () => ({
-      objects: [
-        obj('树木1', 'tree', '#228b22', [-3, 0, -3], { scale: [1.3, 1.3, 1.3] }),
-        obj('树木2', 'tree', '#2e8b57', [3, 0, -4], { scale: [1.1, 1.1, 1.1] }),
-        obj('树木3', 'tree', '#006400', [0, 0, -5], { scale: [1.5, 1.5, 1.5] }),
-        obj('长椅1', 'sofa', '#8b6914', [-1, 0, 1], { scale: [0.6, 0.7, 0.6] }),
-        obj('长椅2', 'sofa', '#8b6914', [2, 0, 2], { scale: [0.6, 0.7, 0.6], rotation: [0, -0.5, 0] }),
-        obj('人物_散步A', 'person', '#e8966d', [0, 0, 0]),
-        obj('人物_散步B', 'person', '#c47a5a', [0.6, 0, 0.3]),
-        obj('人物_休息', 'person', '#d4a574', [-1, 0, 1.3]),
-        obj('栅栏', 'fence', '#deb887', [0, 0, -2.5], { scale: [4, 1, 1] }),
-        obj('喷泉底座', 'cylinder', '#808080', [0, 0, -1.5], { scale: [1, 0.3, 1] }),
-        obj('草地', 'box', '#3a7d3a', [0, 0.01, 0], { scale: [10, 0.02, 8], renderOrder: -1 }),
-      ],
-      camera: { position: [5, 4, 6], target: [0, 0.5, 0], zoom: 1 },
-    }),
+  restaurant: {
+    version: '1.0.0',
+    objects: [
+      { id: 'rt-table-1', name: '桌子_1', kind: 'table', position: { x: -3, y: 0, z: -2 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1.2, y: 1, z: 1.2 }, color: '#8B7355', visible: true, locked: false, occlusionIndex: 0 },
+      { id: 'rt-table-2', name: '桌子_2', kind: 'table', position: { x: 3, y: 0, z: -2 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1.2, y: 1, z: 1.2 }, color: '#8B7355', visible: true, locked: false, occlusionIndex: 1 },
+      { id: 'rt-table-3', name: '桌子_3', kind: 'table', position: { x: -3, y: 0, z: 2 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1.2, y: 1, z: 1.2 }, color: '#8B7355', visible: true, locked: false, occlusionIndex: 2 },
+      { id: 'rt-table-4', name: '桌子_4', kind: 'table', position: { x: 3, y: 0, z: 2 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1.2, y: 1, z: 1.2 }, color: '#8B7355', visible: true, locked: false, occlusionIndex: 3 },
+      { id: 'rt-chair-1', name: '椅子_1', kind: 'chair', position: { x: -3, y: 0, z: -1 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#4A4A4A', visible: true, locked: false, occlusionIndex: 4 },
+      { id: 'rt-chair-2', name: '椅子_2', kind: 'chair', position: { x: -3, y: 0, z: -3 }, rotation: { x: 0, y: Math.PI, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#4A4A4A', visible: true, locked: false, occlusionIndex: 5 },
+      { id: 'rt-chair-3', name: '椅子_3', kind: 'chair', position: { x: 3, y: 0, z: -1 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#4A4A4A', visible: true, locked: false, occlusionIndex: 6 },
+      { id: 'rt-chair-4', name: '椅子_4', kind: 'chair', position: { x: 3, y: 0, z: -3 }, rotation: { x: 0, y: Math.PI, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#4A4A4A', visible: true, locked: false, occlusionIndex: 7 },
+      { id: 'rt-chair-5', name: '椅子_5', kind: 'chair', position: { x: -3, y: 0, z: 1 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#4A4A4A', visible: true, locked: false, occlusionIndex: 8 },
+      { id: 'rt-chair-6', name: '椅子_6', kind: 'chair', position: { x: -3, y: 0, z: 3 }, rotation: { x: 0, y: Math.PI, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#4A4A4A', visible: true, locked: false, occlusionIndex: 9 },
+      { id: 'rt-chair-7', name: '椅子_7', kind: 'chair', position: { x: 3, y: 0, z: 1 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#4A4A4A', visible: true, locked: false, occlusionIndex: 10 },
+      { id: 'rt-chair-8', name: '椅子_8', kind: 'chair', position: { x: 3, y: 0, z: 3 }, rotation: { x: 0, y: Math.PI, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#4A4A4A', visible: true, locked: false, occlusionIndex: 11 },
+      { id: 'rt-cup-1', name: '杯子_1', kind: 'cup', position: { x: -3, y: 1, z: -2 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 0.4, y: 0.4, z: 0.4 }, color: '#FFFFFF', visible: true, locked: false, occlusionIndex: 12 },
+      { id: 'rt-cup-2', name: '杯子_2', kind: 'cup', position: { x: 3, y: 1, z: -2 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 0.4, y: 0.4, z: 0.4 }, color: '#FF6B6B', visible: true, locked: false, occlusionIndex: 13 },
+      { id: 'rt-cup-3', name: '杯子_3', kind: 'cup', position: { x: -3, y: 1, z: 2 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 0.4, y: 0.4, z: 0.4 }, color: '#4A90D9', visible: true, locked: false, occlusionIndex: 14 },
+      { id: 'rt-cup-4', name: '杯子_4', kind: 'cup', position: { x: 3, y: 1, z: 2 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 0.4, y: 0.4, z: 0.4 }, color: '#FFD93D', visible: true, locked: false, occlusionIndex: 15 },
+      { id: 'rt-person-1', name: '人物_1', kind: 'person', position: { x: -5, y: 0, z: -2 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#4A90D9', visible: true, locked: false, occlusionIndex: 16 },
+      { id: 'rt-person-2', name: '人物_2', kind: 'person', position: { x: 5, y: 0, z: 2 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#E85D75', visible: true, locked: false, occlusionIndex: 17 },
+      { id: 'rt-person-3', name: '人物_3', kind: 'person', position: { x: 0, y: 0, z: 4 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, color: '#50C878', visible: true, locked: false, occlusionIndex: 18 },
+    ],
+    metadata: { name: '餐厅', createdAt: '', updatedAt: '' },
   },
-  {
-    key: 'restaurant',
-    label: '餐厅',
-    description: '圆桌、餐椅、杯盘，聚餐场景',
-    create: () => ({
-      objects: [
-        obj('圆桌1', 'cylinder', '#8b6914', [-2, 0, 0], { scale: [0.7, 0.7, 0.7] }),
-        obj('圆桌2', 'cylinder', '#8b6914', [2, 0, 0], { scale: [0.7, 0.7, 0.7] }),
-        obj('椅子1', 'chair', '#a0522d', [-2.5, 0, 0.5]),
-        obj('椅子2', 'chair', '#a0522d', [-1.5, 0, 0.5]),
-        obj('椅子3', 'chair', '#a0522d', [-2, 0, -0.6]),
-        obj('椅子4', 'chair', '#a0522d', [1.5, 0, 0.5]),
-        obj('椅子5', 'chair', '#a0522d', [2.5, 0, 0.5]),
-        obj('椅子6', 'chair', '#a0522d', [2, 0, -0.6]),
-        obj('杯子1', 'cup', '#87ceeb', [-2.2, 0.7, 0.1]),
-        obj('杯子2', 'cup', '#87ceeb', [2.2, 0.7, 0.1]),
-        obj('人物_食客A', 'person', '#e8966d', [-2, 0, 0.8]),
-        obj('人物_食客B', 'person', '#c47a5a', [2, 0, 0.8]),
-        obj('人物_服务员', 'person', '#1a1a1a', [0, 0, 2]),
-        obj('花瓶', 'cylinder', '#ff6347', [-2, 0.75, 0], { scale: [0.12, 0.25, 0.12] }),
-        obj('花瓶', 'cylinder', '#ff6347', [2, 0.75, 0], { scale: [0.12, 0.25, 0.12] }),
-      ],
-      camera: { position: [4, 4, 5], target: [0, 0.5, 0], zoom: 1 },
-    }),
-  },
-];
+};

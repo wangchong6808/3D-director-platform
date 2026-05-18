@@ -1,28 +1,48 @@
 import { useSceneStore } from '../../store/sceneStore';
+import { getLastLogMessage } from '../../utils/logger';
 
-export function StatusBar() {
-  const { objects, selectedId, transformMode } = useSceneStore();
-  const selectedObject = objects.find((o) => o.id === selectedId);
+const TOOL_LABELS: Record<string, string> = {
+  translate: '移动',
+  rotate: '旋转',
+  scale: '缩放',
+};
 
-  const modeLabels = { translate: '移动', rotate: '旋转', scale: '缩放' };
+export default function StatusBar() {
+  const selectedId = useSceneStore(s => s.selectedId);
+  const objects = useSceneStore(s => s.objects);
+  const tool = useSceneStore(s => s.tool);
+  const showGrid = useSceneStore(s => s.showGrid);
+
+  const selected = objects.find(o => o.id === selectedId);
+  const selectedIndex = selected
+    ? [...objects].sort((a, b) => a.occlusionIndex - b.occlusionIndex).findIndex(o => o.id === selectedId)
+    : -1;
+  const logMsg = getLastLogMessage();
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        padding: '2px 12px',
-        background: '#1e1e1e',
-        borderTop: '1px solid #333',
-        color: '#888',
-        fontSize: 11,
-        gap: 16,
-      }}
-    >
-      <span>物体: {objects.length}</span>
-      <span>选中: {selectedObject?.name ?? '无'}</span>
-      <span>模式: {modeLabels[transformMode]}</span>
-      <span style={{ marginLeft: 'auto' }}>3D 导演台 v1.0</span>
+    <div style={{
+      height: 28,
+      display: 'flex',
+      alignItems: 'center',
+      padding: '0 12px',
+      fontSize: 12,
+      background: '#1f1f1f',
+      borderTop: '1px solid #333',
+      color: '#999',
+      gap: 16,
+      flexShrink: 0,
+    }}>
+      <span>
+        {selected
+          ? `${selected.name} | ${selectedIndex + 1} / ${objects.length}`
+          : `未选中 | ${objects.length} 物体`}
+      </span>
+      <span>|</span>
+      <span>{TOOL_LABELS[tool] ?? tool}</span>
+      <span>|</span>
+      <span>网格: {showGrid ? 'ON' : 'OFF'}</span>
+      <span style={{ flex: 1 }} />
+      {logMsg && <span style={{ color: '#666' }}>{logMsg}</span>}
     </div>
   );
 }

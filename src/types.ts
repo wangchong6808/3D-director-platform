@@ -1,48 +1,50 @@
-export type PrimitiveType =
-  | 'box'
-  | 'sphere'
-  | 'cylinder'
-  | 'cone'
-  | 'torus'
-  | 'person'
-  | 'house'
-  | 'table'
-  | 'chair'
-  | 'cup'
-  | 'tree'
-  | 'car'
-  | 'sofa'
-  | 'bed'
-  | 'fence';
-
-export interface Transform3D {
-  position: [number, number, number];
-  rotation: [number, number, number];
-  scale: [number, number, number];
+export interface Vec3 {
+  x: number;
+  y: number;
+  z: number;
 }
+
+export type EditorTool = 'translate' | 'rotate' | 'scale';
+
+export type ObjectKind =
+  | 'box' | 'sphere' | 'cylinder' | 'cone' | 'torus'
+  | 'person' | 'house' | 'table' | 'chair' | 'cup'
+  | 'tree' | 'car' | 'sofa' | 'bed' | 'fence';
 
 export interface SceneObject {
   id: string;
   name: string;
-  gltfUrl: string;
-  primitiveType?: PrimitiveType;
-  color?: string;
-  renderOrder: number;
-  transform: Transform3D;
+  kind: ObjectKind;
+  position: Vec3;
+  rotation: Vec3;
+  scale: Vec3;
+  color: string;
   visible: boolean;
   locked: boolean;
-}
-
-export interface CameraState {
-  position: [number, number, number];
-  target: [number, number, number];
-  zoom: number;
+  occlusionIndex: number;
+  modelPath?: string;
+  modelData?: ArrayBuffer;
 }
 
 export interface SceneData {
   version: string;
   objects: SceneObject[];
-  camera: CameraState;
+  metadata: {
+    name: string;
+    createdAt: string;
+    updatedAt: string;
+  };
 }
 
-export type TransformMode = 'translate' | 'rotate' | 'scale';
+export interface HistoryEntry {
+  type: 'add' | 'remove' | 'transform' | 'property';
+  timestamp: number;
+  patches: ScenePatch[];
+}
+
+export interface ScenePatch {
+  op: 'add' | 'remove' | 'replace';
+  path: string;
+  value?: unknown;
+  oldValue?: unknown;
+}

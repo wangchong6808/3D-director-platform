@@ -1,366 +1,291 @@
-import { useRef, useCallback, useEffect, useMemo } from 'react';
-import { TransformControls } from '@react-three/drei';
+import { useRef, useMemo, useEffect, forwardRef } from 'react';
+import { useGLTF } from '@react-three/drei';
+import { useCursor } from '@react-three/drei';
 import * as THREE from 'three';
-import { useSceneStore } from '../../store/sceneStore';
-import type { PrimitiveType } from '../../types';
+import type { SceneObject } from '../../types';
 
-interface SceneObjectProps {
-  id: string;
-  gltfUrl: string;
-  primitiveType?: PrimitiveType;
-  color?: string;
-  renderOrder: number;
-  position: [number, number, number];
-  rotation: [number, number, number];
-  scale: [number, number, number];
+interface Props {
+  object: SceneObject;
   isSelected: boolean;
-  visible: boolean;
-  locked: boolean;
+  onClick: (id: string) => void;
 }
 
-function Part({ geo, pos, color, rot }: { geo: THREE.BufferGeometry; pos: [number, number, number]; color: THREE.Color; rot?: [number, number, number] }) {
-  return (
-    <mesh geometry={geo} position={pos} rotation={rot ?? [0, 0, 0]}>
-      <meshStandardMaterial color={color} transparent opacity={0.85} />
-    </mesh>
-  );
+function BoxGeom() {
+  return <boxGeometry args={[1, 1, 1]} />;
+}
+function SphereGeom() {
+  return <sphereGeometry args={[0.5, 32, 32]} />;
+}
+function CylinderGeom() {
+  return <cylinderGeometry args={[0.5, 0.5, 1, 32]} />;
+}
+function ConeGeom() {
+  return <coneGeometry args={[0.5, 1, 32]} />;
+}
+function TorusGeom() {
+  return <torusGeometry args={[0.5, 0.2, 16, 32]} />;
 }
 
-function PrimitiveMesh({ type, color }: { type: PrimitiveType; color: string }) {
-  const c = useMemo(() => new THREE.Color(color), [color]);
-  const cDark = useMemo(() => new THREE.Color(color).multiplyScalar(0.7), [color]);
-  const cLight = useMemo(() => new THREE.Color(color).multiplyScalar(1.3), [color]);
-
-  switch (type) {
-    case 'box': {
-      const g = useMemo(() => new THREE.BoxGeometry(1, 1, 1), []);
-      return (
-        <group>
-          <Part geo={g} pos={[0, 0.5, 0]} color={c} />
-          <lineSegments geometry={useMemo(() => new THREE.EdgesGeometry(g), [g])} position={[0, 0.5, 0]}>
-            <lineBasicMaterial color={cLight} />
-          </lineSegments>
-        </group>
-      );
-    }
-    case 'sphere': {
-      const g = useMemo(() => new THREE.SphereGeometry(0.5, 32, 32), []);
-      return (
-        <group>
-          <Part geo={g} pos={[0, 0.5, 0]} color={c} />
-          <lineSegments geometry={useMemo(() => new THREE.EdgesGeometry(g, 30), [g])} position={[0, 0.5, 0]}>
-            <lineBasicMaterial color={cLight} />
-          </lineSegments>
-        </group>
-      );
-    }
-    case 'cylinder': {
-      const g = useMemo(() => new THREE.CylinderGeometry(0.5, 0.5, 1, 32), []);
-      return (
-        <group>
-          <Part geo={g} pos={[0, 0.5, 0]} color={c} />
-          <lineSegments geometry={useMemo(() => new THREE.EdgesGeometry(g, 30), [g])} position={[0, 0.5, 0]}>
-            <lineBasicMaterial color={cLight} />
-          </lineSegments>
-        </group>
-      );
-    }
-    case 'cone': {
-      const g = useMemo(() => new THREE.ConeGeometry(0.5, 1, 32), []);
-      return (
-        <group>
-          <Part geo={g} pos={[0, 0.5, 0]} color={c} />
-          <lineSegments geometry={useMemo(() => new THREE.EdgesGeometry(g, 30), [g])} position={[0, 0.5, 0]}>
-            <lineBasicMaterial color={cLight} />
-          </lineSegments>
-        </group>
-      );
-    }
-    case 'torus': {
-      const g = useMemo(() => new THREE.TorusGeometry(0.4, 0.15, 16, 48), []);
-      return (
-        <group>
-          <Part geo={g} pos={[0, 0.5, 0]} color={c} />
-          <lineSegments geometry={useMemo(() => new THREE.EdgesGeometry(g, 30), [g])} position={[0, 0.5, 0]}>
-            <lineBasicMaterial color={cLight} />
-          </lineSegments>
-        </group>
-      );
-    }
-
-    case 'person': {
-      const bodyG = useMemo(() => new THREE.CylinderGeometry(0.2, 0.25, 1, 16), []);
-      const headG = useMemo(() => new THREE.SphereGeometry(0.2, 16, 16), []);
-      const legG = useMemo(() => new THREE.CylinderGeometry(0.08, 0.08, 0.6, 8), []);
-      const armG = useMemo(() => new THREE.CylinderGeometry(0.06, 0.06, 0.5, 8), []);
-      return (
-        <group>
-          <Part geo={bodyG} pos={[0, 1.1, 0]} color={c} />
-          <Part geo={headG} pos={[0, 1.8, 0]} color={cLight} />
-          <Part geo={legG} pos={[-0.1, 0.3, 0]} color={cDark} />
-          <Part geo={legG} pos={[0.1, 0.3, 0]} color={cDark} />
-          <Part geo={armG} pos={[-0.3, 1.2, 0]} color={cDark} rot={[0, 0, 0.3]} />
-          <Part geo={armG} pos={[0.3, 1.2, 0]} color={cDark} rot={[0, 0, -0.3]} />
-        </group>
-      );
-    }
-
-    case 'house': {
-      const wallG = useMemo(() => new THREE.BoxGeometry(1.6, 1, 1.2), []);
-      const roofG = useMemo(() => new THREE.ConeGeometry(1.2, 0.6, 4), []);
-      const doorG = useMemo(() => new THREE.BoxGeometry(0.3, 0.5, 0.05), []);
-      const windowG = useMemo(() => new THREE.BoxGeometry(0.25, 0.25, 0.05), []);
-      return (
-        <group>
-          <Part geo={wallG} pos={[0, 0.5, 0]} color={c} />
-          <Part geo={roofG} pos={[0, 1.3, 0]} color={cDark} rot={[0, Math.PI / 4, 0]} />
-          <Part geo={doorG} pos={[0, 0.25, 0.63]} color={cDark} />
-          <Part geo={windowG} pos={[-0.4, 0.6, 0.63]} color={cLight} />
-          <Part geo={windowG} pos={[0.4, 0.6, 0.63]} color={cLight} />
-        </group>
-      );
-    }
-
-    case 'table': {
-      const topG = useMemo(() => new THREE.BoxGeometry(1.2, 0.06, 0.8), []);
-      const legG = useMemo(() => new THREE.CylinderGeometry(0.04, 0.04, 0.7, 8), []);
-      return (
-        <group>
-          <Part geo={topG} pos={[0, 0.7, 0]} color={c} />
-          <Part geo={legG} pos={[-0.5, 0.35, -0.3]} color={cDark} />
-          <Part geo={legG} pos={[0.5, 0.35, -0.3]} color={cDark} />
-          <Part geo={legG} pos={[-0.5, 0.35, 0.3]} color={cDark} />
-          <Part geo={legG} pos={[0.5, 0.35, 0.3]} color={cDark} />
-        </group>
-      );
-    }
-
-    case 'chair': {
-      const seatG = useMemo(() => new THREE.BoxGeometry(0.5, 0.05, 0.5), []);
-      const backG = useMemo(() => new THREE.BoxGeometry(0.5, 0.5, 0.05), []);
-      const legG = useMemo(() => new THREE.CylinderGeometry(0.03, 0.03, 0.45, 8), []);
-      return (
-        <group>
-          <Part geo={seatG} pos={[0, 0.45, 0]} color={c} />
-          <Part geo={backG} pos={[0, 0.72, -0.22]} color={cDark} />
-          <Part geo={legG} pos={[-0.2, 0.22, -0.2]} color={cDark} />
-          <Part geo={legG} pos={[0.2, 0.22, -0.2]} color={cDark} />
-          <Part geo={legG} pos={[-0.2, 0.22, 0.2]} color={cDark} />
-          <Part geo={legG} pos={[0.2, 0.22, 0.2]} color={cDark} />
-        </group>
-      );
-    }
-
-    case 'cup': {
-      const bodyG = useMemo(() => new THREE.CylinderGeometry(0.15, 0.12, 0.35, 16), []);
-      const handleG = useMemo(() => new THREE.TorusGeometry(0.08, 0.02, 8, 16, Math.PI), []);
-      return (
-        <group>
-          <Part geo={bodyG} pos={[0, 0.175, 0]} color={c} />
-          <Part geo={handleG} pos={[0.17, 0.2, 0]} color={cDark} rot={[0, 0, Math.PI / 2]} />
-        </group>
-      );
-    }
-
-    case 'tree': {
-      const trunkG = useMemo(() => new THREE.CylinderGeometry(0.08, 0.1, 0.8, 8), []);
-      const crownG = useMemo(() => new THREE.SphereGeometry(0.4, 16, 16), []);
-      const crown2G = useMemo(() => new THREE.SphereGeometry(0.3, 16, 16), []);
-      return (
-        <group>
-          <Part geo={trunkG} pos={[0, 0.4, 0]} color={cDark} />
-          <Part geo={crownG} pos={[0, 1.1, 0]} color={c} />
-          <Part geo={crown2G} pos={[0.15, 1.35, 0.1]} color={cLight} />
-        </group>
-      );
-    }
-
-    case 'car': {
-      const bodyG = useMemo(() => new THREE.BoxGeometry(1.6, 0.35, 0.8), []);
-      const cabinG = useMemo(() => new THREE.BoxGeometry(0.8, 0.3, 0.7), []);
-      const wheelG = useMemo(() => new THREE.CylinderGeometry(0.15, 0.15, 0.08, 16), []);
-      return (
-        <group>
-          <Part geo={bodyG} pos={[0, 0.3, 0]} color={c} />
-          <Part geo={cabinG} pos={[-0.1, 0.62, 0]} color={cLight} />
-          <Part geo={wheelG} pos={[-0.45, 0.15, 0.42]} color={cDark} rot={[Math.PI / 2, 0, 0]} />
-          <Part geo={wheelG} pos={[0.45, 0.15, 0.42]} color={cDark} rot={[Math.PI / 2, 0, 0]} />
-          <Part geo={wheelG} pos={[-0.45, 0.15, -0.42]} color={cDark} rot={[Math.PI / 2, 0, 0]} />
-          <Part geo={wheelG} pos={[0.45, 0.15, -0.42]} color={cDark} rot={[Math.PI / 2, 0, 0]} />
-        </group>
-      );
-    }
-
-    case 'sofa': {
-      const seatG = useMemo(() => new THREE.BoxGeometry(1.4, 0.25, 0.7), []);
-      const backG = useMemo(() => new THREE.BoxGeometry(1.4, 0.45, 0.12), []);
-      const armG = useMemo(() => new THREE.BoxGeometry(0.12, 0.3, 0.7), []);
-      return (
-        <group>
-          <Part geo={seatG} pos={[0, 0.3, 0]} color={c} />
-          <Part geo={backG} pos={[0, 0.65, -0.29]} color={cDark} />
-          <Part geo={armG} pos={[-0.64, 0.42, 0]} color={cDark} />
-          <Part geo={armG} pos={[0.64, 0.42, 0]} color={cDark} />
-        </group>
-      );
-    }
-
-    case 'bed': {
-      const frameG = useMemo(() => new THREE.BoxGeometry(1.4, 0.2, 2), []);
-      const mattressG = useMemo(() => new THREE.BoxGeometry(1.3, 0.15, 1.9), []);
-      const headG = useMemo(() => new THREE.BoxGeometry(1.4, 0.6, 0.08), []);
-      const pillowG = useMemo(() => new THREE.BoxGeometry(0.5, 0.08, 0.3), []);
-      return (
-        <group>
-          <Part geo={frameG} pos={[0, 0.2, 0]} color={cDark} />
-          <Part geo={mattressG} pos={[0, 0.37, 0]} color={cLight} />
-          <Part geo={headG} pos={[0, 0.6, -0.96]} color={c} />
-          <Part geo={pillowG} pos={[-0.3, 0.48, -0.7]} color={cLight} />
-          <Part geo={pillowG} pos={[0.3, 0.48, -0.7]} color={cLight} />
-        </group>
-      );
-    }
-
-    case 'fence': {
-      const postG = useMemo(() => new THREE.BoxGeometry(0.06, 0.8, 0.06), []);
-      const railG = useMemo(() => new THREE.BoxGeometry(1, 0.06, 0.04), []);
-      return (
-        <group>
-          <Part geo={postG} pos={[-0.45, 0.4, 0]} color={cDark} />
-          <Part geo={postG} pos={[0, 0.4, 0]} color={cDark} />
-          <Part geo={postG} pos={[0.45, 0.4, 0]} color={cDark} />
-          <Part geo={railG} pos={[0, 0.6, 0]} color={c} />
-          <Part geo={railG} pos={[0, 0.25, 0]} color={c} />
-        </group>
-      );
-    }
-
-    default:
-      return null;
-  }
-}
-
-const modelCache = new Map<string, THREE.Group>();
-
-function createGLTFPlaceholder(gltfUrl: string): THREE.Group {
-  if (modelCache.has(gltfUrl)) {
-    return modelCache.get(gltfUrl)!.clone();
-  }
-  const group = new THREE.Group();
-  const geometry = new THREE.BoxGeometry(1, 1, 1);
-  const material = new THREE.MeshStandardMaterial({
-    color: 0x4a90d9,
-    transparent: true,
-    opacity: 0.6,
-  });
-  const mesh = new THREE.Mesh(geometry, material);
-  mesh.position.y = 0.5;
-  group.add(mesh);
-
-  const edges = new THREE.EdgesGeometry(geometry);
-  const lineMaterial = new THREE.LineBasicMaterial({ color: 0x6ab0ff });
-  const wireframe = new THREE.LineSegments(edges, lineMaterial);
-  wireframe.position.y = 0.5;
-  group.add(wireframe);
-
-  modelCache.set(gltfUrl, group);
-  return group.clone();
-}
-
-export function SceneObject3D({
-  id,
-  gltfUrl,
-  primitiveType,
-  color = '#4a90d9',
-  renderOrder,
-  position,
-  rotation,
-  scale,
-  isSelected,
-  visible,
-  locked,
-}: SceneObjectProps) {
-  const meshRef = useRef<THREE.Group>(null);
-  const transformRef = useRef<any>(null);
-  const isDraggingRef = useRef(false);
-  const transformMode = useSceneStore((s) => s.transformMode);
-
-  useEffect(() => {
-    if (!meshRef.current) return;
-    meshRef.current.traverse((child) => {
-      child.renderOrder = renderOrder;
-    });
-  }, [renderOrder]);
-
-  useEffect(() => {
-    const controls = transformRef.current;
-    if (!controls) return;
-    controls.setSpace(transformMode === 'scale' ? 'local' : 'world');
-  }, [transformMode]);
-
-  useEffect(() => {
-    const controls = transformRef.current;
-    if (!controls) return;
-
-    const onDraggingChanged = (event: { value: boolean }) => {
-      isDraggingRef.current = event.value;
-      if (!event.value && meshRef.current) {
-        const pos = meshRef.current.position;
-        const rot = meshRef.current.rotation;
-        const scl = meshRef.current.scale;
-        useSceneStore.getState().updateTransform(id, {
-          position: [pos.x, pos.y, pos.z],
-          rotation: [rot.x, rot.y, rot.z],
-          scale: [scl.x, scl.y, scl.z],
-        });
-      }
-    };
-
-    controls.addEventListener('dragging-changed', onDraggingChanged);
-    return () => controls.removeEventListener('dragging-changed', onDraggingChanged);
-  }, [id]);
-
-  useEffect(() => {
-    if (isDraggingRef.current || !meshRef.current) return;
-    meshRef.current.position.set(position[0], position[1], position[2]);
-    meshRef.current.rotation.set(rotation[0], rotation[1], rotation[2]);
-    meshRef.current.scale.set(scale[0], scale[1], scale[2]);
-  }, [position[0], position[1], position[2], rotation[0], rotation[1], rotation[2], scale[0], scale[1], scale[2]]);
-
-  const handleClick = useCallback(
-    (e: any) => {
-      e.stopPropagation();
-      if (!locked) useSceneStore.getState().selectObject(id);
-    },
-    [id, locked]
-  );
-
-  if (!visible) return null;
-
-  const showControls = isSelected && !locked;
-
-  return (
-    <TransformControls
-      ref={transformRef}
-      mode={transformMode}
-      enabled={showControls}
-      showX={showControls}
-      showY={showControls}
-      showZ={showControls}
-    >
-      <group
-        ref={meshRef}
-        position={position}
-        rotation={rotation}
-        scale={scale}
-        onClick={handleClick}
-      >
-        {primitiveType ? (
-          <PrimitiveMesh type={primitiveType} color={color} />
-        ) : (
-          <primitive object={createGLTFPlaceholder(gltfUrl)} />
-        )}
+function CompoundObject({ kind, color }: { kind: string; color: string }) {
+  const c = new THREE.Color(color);
+  switch (kind) {
+    case 'person': return (
+      <group>
+        <mesh position={[0, 1.4, 0]}>
+          <sphereGeometry args={[0.25, 16, 16]} />
+          <meshStandardMaterial color={color} />
+        </mesh>
+        <mesh position={[0, 0.8, 0]}>
+          <cylinderGeometry args={[0.15, 0.15, 0.8, 8]} />
+          <meshStandardMaterial color={c.clone().multiplyScalar(0.7)} />
+        </mesh>
+        <mesh position={[0, 0.4, 0]}>
+          <boxGeometry args={[0.4, 0.6, 0.2]} />
+          <meshStandardMaterial color={color} />
+        </mesh>
+        <mesh position={[-0.22, 0.0, 0]}>
+          <cylinderGeometry args={[0.06, 0.06, 0.8, 8]} />
+          <meshStandardMaterial color={c.clone().multiplyScalar(0.7)} />
+        </mesh>
+        <mesh position={[0.22, 0.0, 0]}>
+          <cylinderGeometry args={[0.06, 0.06, 0.8, 8]} />
+          <meshStandardMaterial color={c.clone().multiplyScalar(0.7)} />
+        </mesh>
       </group>
-    </TransformControls>
-  );
+    );
+    case 'house': return (
+      <group>
+        <mesh position={[0, 0.5, 0]}>
+          <boxGeometry args={[1, 1, 1]} />
+          <meshStandardMaterial color={color} />
+        </mesh>
+        <mesh position={[0, 1.25, 0]} rotation={[0, 0, 0]}>
+          <coneGeometry args={[0.7, 0.5, 4]} />
+          <meshStandardMaterial color={c.clone().multiplyScalar(0.6)} />
+        </mesh>
+      </group>
+    );
+    case 'table': return (
+      <group>
+        <mesh position={[0, 0.5, 0]}>
+          <boxGeometry args={[1.2, 0.1, 0.8]} />
+          <meshStandardMaterial color={color} />
+        </mesh>
+        <mesh position={[-0.5, 0.25, -0.3]}>
+          <cylinderGeometry args={[0.06, 0.06, 0.5, 8]} />
+          <meshStandardMaterial color={c.clone().multiplyScalar(0.5)} />
+        </mesh>
+        <mesh position={[0.5, 0.25, -0.3]}>
+          <cylinderGeometry args={[0.06, 0.06, 0.5, 8]} />
+          <meshStandardMaterial color={c.clone().multiplyScalar(0.5)} />
+        </mesh>
+        <mesh position={[-0.5, 0.25, 0.3]}>
+          <cylinderGeometry args={[0.06, 0.06, 0.5, 8]} />
+          <meshStandardMaterial color={c.clone().multiplyScalar(0.5)} />
+        </mesh>
+        <mesh position={[0.5, 0.25, 0.3]}>
+          <cylinderGeometry args={[0.06, 0.06, 0.5, 8]} />
+          <meshStandardMaterial color={c.clone().multiplyScalar(0.5)} />
+        </mesh>
+      </group>
+    );
+    case 'chair': return (
+      <group>
+        <mesh position={[0, 0.5, 0]}>
+          <boxGeometry args={[0.4, 0.05, 0.4]} />
+          <meshStandardMaterial color={color} />
+        </mesh>
+        <mesh position={[0, 0.3, -0.18]}>
+          <boxGeometry args={[0.35, 0.5, 0.04]} />
+          <meshStandardMaterial color={color} />
+        </mesh>
+        <mesh position={[-0.15, 0.2, 0.15]}>
+          <cylinderGeometry args={[0.04, 0.04, 0.4, 8]} />
+          <meshStandardMaterial color={c.clone().multiplyScalar(0.5)} />
+        </mesh>
+        <mesh position={[0.15, 0.2, 0.15]}>
+          <cylinderGeometry args={[0.04, 0.04, 0.4, 8]} />
+          <meshStandardMaterial color={c.clone().multiplyScalar(0.5)} />
+        </mesh>
+      </group>
+    );
+    case 'cup': return (
+      <group>
+        <mesh position={[0, 0.3, 0]}>
+          <cylinderGeometry args={[0.15, 0.12, 0.6, 16]} />
+          <meshStandardMaterial color={color} />
+        </mesh>
+        <mesh position={[0.18, 0.35, 0]} rotation={[0, 0, Math.PI / 2]}>
+          <torusGeometry args={[0.08, 0.02, 8, 8]} />
+          <meshStandardMaterial color={color} />
+        </mesh>
+      </group>
+    );
+    case 'tree': return (
+      <group>
+        <mesh position={[0, 0.4, 0]}>
+          <cylinderGeometry args={[0.08, 0.12, 0.8, 8]} />
+          <meshStandardMaterial color="#8B6914" />
+        </mesh>
+        <mesh position={[0, 1.0, 0]}>
+          <coneGeometry args={[0.5, 1, 8]} />
+          <meshStandardMaterial color={color} />
+        </mesh>
+        <mesh position={[0, 1.5, 0]}>
+          <coneGeometry args={[0.35, 0.7, 8]} />
+          <meshStandardMaterial color={c.clone().multiplyScalar(0.8)} />
+        </mesh>
+      </group>
+    );
+    case 'car': return (
+      <group>
+        <mesh position={[0, 0.3, 0]}>
+          <boxGeometry args={[1.5, 0.4, 0.8]} />
+          <meshStandardMaterial color={color} />
+        </mesh>
+        <mesh position={[0, 0.6, 0.1]}>
+          <boxGeometry args={[0.7, 0.25, 0.6]} />
+          <meshStandardMaterial color={c.clone().multiplyScalar(0.85)} />
+        </mesh>
+        <group rotation={[Math.PI / 2, 0, 0]}>
+          <mesh position={[-0.5, 0.12, 0.35]}>
+            <cylinderGeometry args={[0.18, 0.18, 0.1, 16]} />
+            <meshStandardMaterial color="#222222" />
+          </mesh>
+          <mesh position={[0.5, 0.12, 0.35]}>
+            <cylinderGeometry args={[0.18, 0.18, 0.1, 16]} />
+            <meshStandardMaterial color="#222222" />
+          </mesh>
+          <mesh position={[-0.5, 0.12, -0.35]}>
+            <cylinderGeometry args={[0.18, 0.18, 0.1, 16]} />
+            <meshStandardMaterial color="#222222" />
+          </mesh>
+          <mesh position={[0.5, 0.12, -0.35]}>
+            <cylinderGeometry args={[0.18, 0.18, 0.1, 16]} />
+            <meshStandardMaterial color="#222222" />
+          </mesh>
+        </group>
+      </group>
+    );
+    case 'sofa': return (
+      <group>
+        <mesh position={[0, 0.3, 0]}>
+          <boxGeometry args={[2.5, 0.4, 0.8]} />
+          <meshStandardMaterial color={color} />
+        </mesh>
+        <mesh position={[0, 0.7, -0.35]}>
+          <boxGeometry args={[2.3, 0.4, 0.1]} />
+          <meshStandardMaterial color={c.clone().multiplyScalar(0.85)} />
+        </mesh>
+        <mesh position={[-1.1, 0.5, 0.35]}>
+          <boxGeometry args={[0.2, 0.4, 0.1]} />
+          <meshStandardMaterial color={c.clone().multiplyScalar(0.85)} />
+        </mesh>
+        <mesh position={[1.1, 0.5, 0.35]}>
+          <boxGeometry args={[0.2, 0.4, 0.1]} />
+          <meshStandardMaterial color={c.clone().multiplyScalar(0.85)} />
+        </mesh>
+      </group>
+    );
+    case 'bed': return (
+      <group>
+        <mesh position={[0, 0.15, 0]}>
+          <boxGeometry args={[2, 0.3, 1.5]} />
+          <meshStandardMaterial color={color} />
+        </mesh>
+        <mesh position={[0, 0.35, 0]}>
+          <boxGeometry args={[1.8, 0.15, 1.3]} />
+          <meshStandardMaterial color="#FFFFFF" />
+        </mesh>
+        <mesh position={[0, 0.7, -0.7]}>
+          <boxGeometry args={[1.9, 0.5, 0.1]} />
+          <meshStandardMaterial color={c.clone().multiplyScalar(0.7)} />
+        </mesh>
+      </group>
+    );
+    case 'fence': return (
+      <group>
+        <mesh position={[0, 0.25, 0]}>
+          <boxGeometry args={[2, 0.5, 0.05]} />
+          <meshStandardMaterial color={color} />
+        </mesh>
+        <mesh position={[-0.8, 0.5, 0]}>
+          <boxGeometry args={[0.06, 0.5, 0.05]} />
+          <meshStandardMaterial color={c.clone().multiplyScalar(0.7)} />
+        </mesh>
+        <mesh position={[0, 0.5, 0]}>
+          <boxGeometry args={[0.06, 0.5, 0.05]} />
+          <meshStandardMaterial color={c.clone().multiplyScalar(0.7)} />
+        </mesh>
+        <mesh position={[0.8, 0.5, 0]}>
+          <boxGeometry args={[0.06, 0.5, 0.05]} />
+          <meshStandardMaterial color={c.clone().multiplyScalar(0.7)} />
+        </mesh>
+      </group>
+    );
+    default: return (
+      <mesh>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color={color} />
+      </mesh>
+    );
+  }
 }
+
+function ImportedModel({ modelData }: { modelData: ArrayBuffer }) {
+  const blobUrl = useMemo(() => {
+    const blob = new Blob([modelData], { type: 'application/octet-stream' });
+    return URL.createObjectURL(blob);
+  }, [modelData]);
+
+  useEffect(() => {
+    return () => {
+      URL.revokeObjectURL(blobUrl);
+    };
+  }, [blobUrl]);
+
+  const { scene } = useGLTF(blobUrl);
+
+  return <primitive object={scene} />;
+}
+
+const BASIC_GEOMETRIES = new Set(['box', 'sphere', 'cylinder', 'cone', 'torus']);
+
+export default forwardRef<THREE.Group, Props>(function SceneObject3D({ object, isSelected, onClick }, ref) {
+  const innerRef = useRef<THREE.Group>(null);
+  const groupRef = (ref || innerRef) as React.RefObject<THREE.Group>;
+  useCursor(!object.locked);
+
+  return (
+    <group
+      ref={groupRef}
+      position={[object.position.x, object.position.y, object.position.z]}
+      rotation={[object.rotation.x, object.rotation.y, object.rotation.z]}
+      scale={[object.scale.x, object.scale.y, object.scale.z]}
+      visible={object.visible}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (!object.locked) onClick(object.id);
+      }}
+    >
+      {object.modelData ? (
+        <ImportedModel modelData={object.modelData} />
+      ) : BASIC_GEOMETRIES.has(object.kind) ? (
+        <mesh>
+          {object.kind === 'box' && <BoxGeom />}
+          {object.kind === 'sphere' && <SphereGeom />}
+          {object.kind === 'cylinder' && <CylinderGeom />}
+          {object.kind === 'cone' && <ConeGeom />}
+          {object.kind === 'torus' && <TorusGeom />}
+          <meshStandardMaterial
+            color={object.color}
+            emissive={isSelected ? object.color : '#000000'}
+            emissiveIntensity={isSelected ? 0.3 : 0}
+          />
+        </mesh>
+      ) : (
+        <CompoundObject kind={object.kind} color={object.color} />
+      )}
+    </group>
+  );
+});

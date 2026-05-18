@@ -1,239 +1,230 @@
-import { Button, Space, Tooltip, Divider, Dropdown } from 'antd';
+import { useRef } from 'react';
+import { Button, Space, Dropdown, Tooltip, Divider } from 'antd';
+import type { MenuProps } from 'antd';
 import {
-  DragOutlined,
-  RotateRightOutlined,
-  ExpandOutlined,
-  UndoOutlined,
-  RedoOutlined,
-  ImportOutlined,
-  ExportOutlined,
-  SaveOutlined,
-  FolderOpenOutlined,
-  PlusOutlined,
-  BorderOutlined,
-  BorderlessTableOutlined,
-  VideoCameraOutlined,
+  ScanOutlined, ExpandOutlined, DragOutlined,
+  UndoOutlined, RedoOutlined,
+  SaveOutlined, FolderOpenOutlined, ImportOutlined, ExportOutlined,
+  EyeOutlined, EyeInvisibleOutlined, PlusOutlined, AppstoreOutlined,
 } from '@ant-design/icons';
 import { useSceneStore } from '../../store/sceneStore';
-import { loadGLTFFromFile, generateId, downloadJSON, loadSceneFromFile } from '../../utils/sceneUtils';
+import { demoScenes } from '../../utils/demoScenes';
+import { serializeScene, deserializeScene, downloadFile } from '../../utils/sceneUtils';
 import { logger } from '../../utils/logger';
-import { DEMO_SCENES } from '../../utils/demoScenes';
-import type { TransformMode, PrimitiveType } from '../../types';
+import type { EditorTool, ObjectKind } from '../../types';
 
-const M = 'Toolbar';
-
-interface PrimitiveItem {
-  key: PrimitiveType;
-  label: string;
-  color: string;
-  category: string;
-}
-
-const PRIMITIVE_ITEMS: PrimitiveItem[] = [
-  { key: 'box', label: '方块', color: '#4a90d9', category: '基础几何体' },
-  { key: 'sphere', label: '球体', color: '#52c41a', category: '基础几何体' },
-  { key: 'cylinder', label: '圆柱', color: '#faad14', category: '基础几何体' },
-  { key: 'cone', label: '圆锥', color: '#ff4d4f', category: '基础几何体' },
-  { key: 'torus', label: '圆环', color: '#722ed1', category: '基础几何体' },
-  { key: 'person', label: '人物', color: '#e8966d', category: '常见物体' },
-  { key: 'house', label: '房子', color: '#d4a574', category: '常见物体' },
-  { key: 'table', label: '桌子', color: '#8b6914', category: '常见物体' },
-  { key: 'chair', label: '椅子', color: '#a0522d', category: '常见物体' },
-  { key: 'cup', label: '杯子', color: '#87ceeb', category: '常见物体' },
-  { key: 'tree', label: '树木', color: '#228b22', category: '常见物体' },
-  { key: 'car', label: '汽车', color: '#dc143c', category: '常见物体' },
-  { key: 'sofa', label: '沙发', color: '#6b8e23', category: '常见物体' },
-  { key: 'bed', label: '床', color: '#daa520', category: '常见物体' },
-  { key: 'fence', label: '栅栏', color: '#deb887', category: '常见物体' },
+const TOOLS: { key: EditorTool; label: string; shortcut: string; icon: React.ReactNode }[] = [
+  { key: 'translate', label: '移动', shortcut: 'W', icon: <DragOutlined /> },
+  { key: 'rotate', label: '旋转', shortcut: 'E', icon: <ExpandOutlined /> },
+  { key: 'scale', label: '缩放', shortcut: 'R', icon: <ScanOutlined /> },
 ];
 
-let primitiveCounter: Record<string, number> = {};
+const OBJECT_TYPES: { kind: ObjectKind; label: string; group: string }[] = [
+  { kind: 'box', label: '方块', group: '几何体' },
+  { kind: 'sphere', label: '球体', group: '几何体' },
+  { kind: 'cylinder', label: '圆柱', group: '几何体' },
+  { kind: 'cone', label: '圆锥', group: '几何体' },
+  { kind: 'torus', label: '圆环', group: '几何体' },
+  { kind: 'person', label: '人物', group: '常见物体' },
+  { kind: 'house', label: '房子', group: '常见物体' },
+  { kind: 'table', label: '桌子', group: '常见物体' },
+  { kind: 'chair', label: '椅子', group: '常见物体' },
+  { kind: 'cup', label: '杯子', group: '常见物体' },
+  { kind: 'tree', label: '树木', group: '常见物体' },
+  { kind: 'car', label: '汽车', group: '常见物体' },
+  { kind: 'sofa', label: '沙发', group: '常见物体' },
+  { kind: 'bed', label: '床', group: '常见物体' },
+  { kind: 'fence', label: '栅栏', group: '常见物体' },
+];
 
-export function Toolbar() {
-  const { transformMode, setTransformMode, addObject, undo, redo, exportScene, importScene, showGrid, toggleGrid } = useSceneStore();
+export default function Toolbar() {
+  const tool = useSceneStore(s => s.tool);
+  const setTool = useSceneStore(s => s.setTool);
+  const showGrid = useSceneStore(s => s.showGrid);
+  const toggleGrid = useSceneStore(s => s.toggleGrid);
+  const historyIndex = useSceneStore(s => s.historyIndex);
+  const history = useSceneStore(s => s.history);
+  const undo = useSceneStore(s => s.undo);
+  const redo = useSceneStore(s => s.redo);
+  const addObject = useSceneStore(s => s.addObject);
+  const loadScene = useSceneStore(s => s.loadScene);
+  const getSceneData = useSceneStore(s => s.getSceneData);
+  const clearScene = useSceneStore(s => s.clearScene);
+  const sceneName = useSceneStore(s => s.sceneName);
 
-  const handleAddPrimitive = (type: PrimitiveType) => {
-    if (!primitiveCounter[type]) primitiveCounter[type] = 0;
-    primitiveCounter[type]++;
-    const item = PRIMITIVE_ITEMS.find((p) => p.key === type);
-    const name = `${item?.label ?? type}_${primitiveCounter[type]}`;
-    logger.info(M, '添加物体', { 类型: type, 名称: name, 颜色: item?.color });
-    addObject({
-      id: generateId(),
-      name,
-      gltfUrl: '',
-      primitiveType: type,
-      color: item?.color,
-      renderOrder: 0,
-      transform: { position: [0, 0, 0], rotation: [0, 0, 0], scale: [1, 1, 1] },
-      visible: true,
-      locked: false,
-    });
-  };
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const jsonInputRef = useRef<HTMLInputElement>(null);
+  const gltfInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImportGLTF = async () => {
-    try {
-      const { url, name } = await loadGLTFFromFile();
-      logger.info(M, '导入GLTF模型', { url, name });
-      addObject({
-        id: generateId(),
-        name,
-        gltfUrl: url,
-        renderOrder: 0,
-        transform: { position: [0, 0, 0], rotation: [0, 0, 0], scale: [1, 1, 1] },
-        visible: true,
-        locked: false,
-      });
-    } catch {}
-  };
+  const canUndo = historyIndex > 0;
+  const canRedo = historyIndex < history.length - 1;
 
-  const handleSaveScene = () => {
-    const data = exportScene();
-    downloadJSON(data, `scene_${Date.now()}.json`);
-  };
+  function handleSave() {
+    const data = getSceneData();
+    const json = serializeScene(data);
+    const blob = new Blob([json], { type: 'application/json' });
+    downloadFile(blob, `${sceneName}.json`);
+    logger.info('场景已保存');
+  }
 
-  const handleLoadScene = async () => {
-    try {
-      const data = await loadSceneFromFile();
-      importScene(data);
-    } catch {}
-  };
+  function handleLoadJSON(file: File) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = deserializeScene(reader.result as string);
+        loadScene(data);
+        logger.info(`已加载场景: ${data.metadata.name}`);
+      } catch {
+        logger.error('加载失败：文件格式无效');
+      }
+    };
+    reader.readAsText(file);
+  }
 
-  const handleExportGLTF = () => {
-    const canvas = document.querySelector('canvas');
-    if (!canvas) return;
-    const event = new CustomEvent('export-gltf');
-    canvas.dispatchEvent(event);
-  };
+  function handleImportGLTF(file: File) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const buffer = reader.result as ArrayBuffer;
+      addObject('box', undefined, buffer, file.name);
+      logger.info(`已导入模型: ${file.name}`);
+    };
+    reader.readAsArrayBuffer(file);
+  }
 
-  const handleLoadDemoScene = (sceneKey: string) => {
-    const scene = DEMO_SCENES.find((s) => s.key === sceneKey);
-    if (!scene) return;
-    const { objects, camera } = scene.create();
-    logger.info(M, '加载示例场景', { 场景: scene.label, 物体数量: objects.length });
-    useSceneStore.getState().importScene({
-      version: '1.0.0',
-      objects,
-      camera: { position: camera.position, target: camera.target, zoom: camera.zoom },
-    });
-  };
+  const sceneMenuItems: MenuProps['items'] = Object.entries(demoScenes).map(([key, data]) => ({
+    key,
+    label: data.metadata.name,
+    onClick: () => {
+      clearScene();
+      loadScene(data);
+      logger.info(`已加载示例场景: ${data.metadata.name}`);
+    },
+  }));
 
-  const modeButtons: { mode: TransformMode; icon: React.ReactNode; label: string; shortcut: string }[] = [
-    { mode: 'translate', icon: <DragOutlined />, label: '移动', shortcut: 'W' },
-    { mode: 'rotate', icon: <RotateRightOutlined />, label: '旋转', shortcut: 'E' },
-    { mode: 'scale', icon: <ExpandOutlined />, label: '缩放', shortcut: 'R' },
+  const geoItems: MenuProps['items'] = OBJECT_TYPES.filter(t => t.group === '几何体').map(t => ({
+    key: t.kind,
+    label: t.label,
+    onClick: () => addObject(t.kind),
+  }));
+
+  const commonItems: MenuProps['items'] = OBJECT_TYPES.filter(t => t.group === '常见物体').map(t => ({
+    key: t.kind,
+    label: t.label,
+    onClick: () => addObject(t.kind),
+  }));
+
+  const addMenuItems: MenuProps['items'] = [
+    { key: 'geo', label: '基础几何体', children: geoItems, type: 'group' },
+    { key: 'common', label: '常见物体', children: commonItems, type: 'group' },
   ];
 
-  const categories = [...new Set(PRIMITIVE_ITEMS.map((p) => p.category))];
-  const menuItems = categories.map((cat) => ({
-    key: cat,
-    type: 'group' as const,
-    label: <span style={{ color: '#999', fontSize: 11 }}>{cat}</span>,
-    children: PRIMITIVE_ITEMS.filter((p) => p.category === cat).map((item) => ({
-      key: item.key,
-      label: (
-        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ width: 10, height: 10, borderRadius: 2, background: item.color, display: 'inline-block' }} />
-          {item.label}
-        </span>
-      ),
-      onClick: () => handleAddPrimitive(item.key),
-    })),
-  }));
-
-  const demoSceneMenuItems = DEMO_SCENES.map((scene) => ({
-    key: scene.key,
-    label: (
-      <div>
-        <div style={{ color: '#ccc', fontSize: 12 }}>{scene.label}</div>
-        <div style={{ color: '#888', fontSize: 10 }}>{scene.description}</div>
-      </div>
-    ),
-    onClick: () => handleLoadDemoScene(scene.key),
-  }));
-
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        padding: '4px 12px',
-        background: '#1e1e1e',
-        borderBottom: '1px solid #333',
-        gap: 4,
-      }}
-    >
-      <Space size={2}>
-        {modeButtons.map(({ mode, icon, label, shortcut }) => (
-          <Tooltip key={mode} title={`${label} (${shortcut})`}>
+    <div style={{
+      height: 40,
+      display: 'flex',
+      alignItems: 'center',
+      padding: '0 8px',
+      background: '#1f1f1f',
+      borderBottom: '1px solid #333',
+      gap: 4,
+      flexShrink: 0,
+    }}>
+      <Dropdown menu={{ items: addMenuItems }} trigger={['click']}>
+        <Button type="text" icon={<PlusOutlined />} size="small">添加</Button>
+      </Dropdown>
+
+      <Divider type="vertical" />
+
+      <Space.Compact size="small">
+        {TOOLS.map(t => (
+          <Tooltip key={t.key} title={`${t.label} (${t.shortcut})`}>
             <Button
-              type={transformMode === mode ? 'primary' : 'text'}
-              icon={icon}
-              size="small"
-              onClick={() => setTransformMode(mode)}
-              style={{ color: transformMode === mode ? undefined : '#ccc' }}
-            />
+              type={tool === t.key ? 'primary' : 'text'}
+              icon={t.icon}
+              onClick={() => setTool(t.key)}
+            >
+              {t.label}
+            </Button>
           </Tooltip>
         ))}
-      </Space>
+      </Space.Compact>
 
-      <Divider orientation="vertical" style={{ borderColor: '#444', margin: '0 8px' }} />
+      <Divider type="vertical" />
 
-      <Space size={2}>
-        <Tooltip title="撤销 (Ctrl+Z)">
-          <Button type="text" icon={<UndoOutlined />} size="small" onClick={undo} style={{ color: '#ccc' }} />
-        </Tooltip>
-        <Tooltip title="重做 (Ctrl+Shift+Z)">
-          <Button type="text" icon={<RedoOutlined />} size="small" onClick={redo} style={{ color: '#ccc' }} />
-        </Tooltip>
-        <Tooltip title={showGrid ? '隐藏网格 (G)' : '显示网格 (G)'}>
-          <Button
-            type={showGrid ? 'primary' : 'text'}
-            icon={showGrid ? <BorderOutlined /> : <BorderlessTableOutlined />}
-            size="small"
-            onClick={toggleGrid}
-            style={{ color: showGrid ? undefined : '#888' }}
-          />
-        </Tooltip>
-      </Space>
+      <Tooltip title="网格 (G)">
+        <Button
+          type={showGrid ? 'primary' : 'text'}
+          icon={showGrid ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+          size="small"
+          onClick={toggleGrid}
+        />
+      </Tooltip>
 
-      <Divider orientation="vertical" style={{ borderColor: '#444', margin: '0 8px' }} />
+      <Divider type="vertical" />
 
-      <Dropdown menu={{ items: menuItems }} trigger={['click']}>
-        <Tooltip title="添加物体">
-          <Button type="text" icon={<PlusOutlined />} size="small" style={{ color: '#52c41a' }} />
-        </Tooltip>
+      <Tooltip title="撤销 (Ctrl+Z)">
+        <Button
+          type="text"
+          icon={<UndoOutlined />}
+          size="small"
+          disabled={!canUndo}
+          onClick={undo}
+        />
+      </Tooltip>
+      <Tooltip title="重做 (Ctrl+Shift+Z)">
+        <Button
+          type="text"
+          icon={<RedoOutlined />}
+          size="small"
+          disabled={!canRedo}
+          onClick={redo}
+        />
+      </Tooltip>
+
+      <Divider type="vertical" />
+
+      <Dropdown menu={{ items: sceneMenuItems }} trigger={['click']}>
+        <Button type="text" size="small" icon={<AppstoreOutlined />}>示例场景</Button>
       </Dropdown>
 
-      <Divider orientation="vertical" style={{ borderColor: '#444', margin: '0 8px' }} />
+      <div style={{ flex: 1 }} />
 
-      <Dropdown menu={{ items: demoSceneMenuItems }} trigger={['click']}>
-        <Tooltip title="示例场景">
-          <Button type="text" icon={<VideoCameraOutlined />} size="small" style={{ color: '#faad14' }} />
-        </Tooltip>
-      </Dropdown>
+      <input
+        ref={gltfInputRef}
+        type="file"
+        accept=".gltf,.glb"
+        style={{ display: 'none' }}
+        onChange={e => { const f = e.target.files?.[0]; if (f) handleImportGLTF(f); }}
+      />
+      <Tooltip title="导入模型">
+        <Button type="text" icon={<ImportOutlined />} size="small" onClick={() => gltfInputRef.current?.click()}>导入</Button>
+      </Tooltip>
 
-      <Divider orientation="vertical" style={{ borderColor: '#444', margin: '0 8px' }} />
+      <input
+        ref={jsonInputRef}
+        type="file"
+        accept=".json"
+        style={{ display: 'none' }}
+        onChange={e => { const f = e.target.files?.[0]; if (f) handleLoadJSON(f); }}
+      />
+      <Tooltip title="加载场景 (JSON)">
+        <Button type="text" icon={<FolderOpenOutlined />} size="small" onClick={() => jsonInputRef.current?.click()}>加载</Button>
+      </Tooltip>
 
-      <Space size={2}>
-        <Tooltip title="导入GLTF模型">
-          <Button type="text" icon={<ImportOutlined />} size="small" onClick={handleImportGLTF} style={{ color: '#ccc' }} />
-        </Tooltip>
-        <Tooltip title="导出GLTF">
-          <Button type="text" icon={<ExportOutlined />} size="small" onClick={handleExportGLTF} style={{ color: '#ccc' }} />
-        </Tooltip>
-      </Space>
+      <Tooltip title="保存场景 (Ctrl+S)">
+        <Button type="text" icon={<SaveOutlined />} size="small" onClick={handleSave}>保存</Button>
+      </Tooltip>
 
-      <Divider orientation="vertical" style={{ borderColor: '#444', margin: '0 8px' }} />
-
-      <Space size={2}>
-        <Tooltip title="保存场景 (Ctrl+S)">
-          <Button type="text" icon={<SaveOutlined />} size="small" onClick={handleSaveScene} style={{ color: '#ccc' }} />
-        </Tooltip>
-        <Tooltip title="加载场景">
-          <Button type="text" icon={<FolderOpenOutlined />} size="small" onClick={handleLoadScene} style={{ color: '#ccc' }} />
-        </Tooltip>
-      </Space>
+      <Tooltip title="导出 GLB">
+        <Button type="text" icon={<ExportOutlined />} size="small" onClick={() => {
+          import('../../utils/sceneUtils').then(({ exportToGLB, downloadFile }) => {
+            exportToGLB(useSceneStore.getState().objects).then(buffer => {
+              downloadFile(new Blob([buffer]), `${useSceneStore.getState().sceneName}.glb`);
+              logger.info('GLB 已导出');
+            });
+          });
+        }}>导出</Button>
+      </Tooltip>
     </div>
   );
 }

@@ -1,198 +1,154 @@
-import { useState, useRef, useEffect } from 'react';
-import { Tree, Button, Space, Input } from 'antd';
-import { EyeOutlined, EyeInvisibleOutlined, LockOutlined, UnlockOutlined, DeleteOutlined } from '@ant-design/icons';
-import type { TreeProps } from 'antd';
+import { useState, useMemo } from 'react';
+import { Tree, Button, Input, Space } from 'antd';
+import { SearchOutlined, VerticalAlignTopOutlined, VerticalAlignBottomOutlined, UpOutlined, DownOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useSceneStore } from '../../store/sceneStore';
-import { logger } from '../../utils/logger';
+import type { SceneObject } from '../../types';
+import type { DataNode, EventDataNode } from 'antd/es/tree';
 
-const M = 'SceneTree';
+export default function SceneTree() {
+  const objects = useSceneStore(s => s.objects);
+  const selectedId = useSceneStore(s => s.selectedId);
+  const selectObject = useSceneStore(s => s.selectObject);
+  const updateObject = useSceneStore(s => s.updateObject);
+  const removeObject = useSceneStore(s => s.removeObject);
+  const bringToFront = useSceneStore(s => s.bringToFront);
+  const bringForward = useSceneStore(s => s.bringForward);
+  const sendBackward = useSceneStore(s => s.sendBackward);
+  const sendToBack = useSceneStore(s => s.sendToBack);
+  const saveHistory = useSceneStore(s => s.saveHistory);
 
-export function SceneTree() {
-  const { objects, selectedId, selectObject, toggleVisibility, toggleLock, removeObject, updateObjectName } = useSceneStore();
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingName, setEditingName] = useState('');
-  const inputRef = useRef<any>(null);
+  const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    if (editingId && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
+  const sorted = useMemo(() => {
+    return [...objects].sort((a, b) => a.occlusionIndex - b.occlusionIndex);
+  }, [objects]);
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return sorted;
+    return sorted.filter(o => o.name.toLowerCase().includes(search.toLowerCase()));
+  }, [sorted, search]);
+
+  const treeData: DataNode[] = useMemo(() => {
+    return filtered.map(o => ({
+      key: o.id,
+      title: o.name,
+      icon: (
+        <span style={{ fontSize: 12 }}>
+          {o.locked ? '🔒' : '🔓'} {o.visible ? '👁' : '👁‍🗨'}
+        </span>
+      ),
+    }));
+  }, [filtered]);
+
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+
+  function handleSelect(keys: React.Key[]) {
+    if (keys.length > 0) selectObject(keys[0] as string);
+  }
+
+  function handleDoubleClick(_e: React.MouseEvent, node: EventDataNode<DataNode>) {
+    setEditingKey(node.key as string);
+    setTimeout(() => {
+      const input = document.querySelector('.scene-tree-rename-input input') as HTMLInputElement;
+      if (input) input.focus();
+    }, 50);
+  }
+
+  function handleRename(key: string, value: string) {
+    if (value.trim()) {
+      saveHistory();
+      updateObject(key, { name: value.trim() });
     }
-  }, [editingId]);
+    setEditingKey(null);
+  }
 
-  const handleDoubleClick = (id: string) => {
-    if (id === 'root') return;
-    const obj = objects.find((o) => o.id === id);
-    if (!obj) return;
-    logger.info(M, '双击编辑名称', { 物体ID: id, 当前名称: obj.name });
-    setEditingId(id);
-    setEditingName(obj.name);
-  };
-
-  const handleConfirmName = () => {
-    if (editingId) {
-      const trimmed = editingName.trim();
-      if (trimmed) {
-        logger.info(M, '确认修改名称', { 物体ID: editingId, 新名称: trimmed });
-        updateObjectName(editingId, trimmed);
-      }
-      setEditingId(null);
-      setEditingName('');
-    }
-  };
-
-  const handleCancelName = () => {
-    logger.debug(M, '取消编辑名称', { 物体ID: editingId });
-    setEditingId(null);
-    setEditingName('');
-  };
-
-  const treeData: TreeProps['treeData'] = [
-    {
-      title: '场景根节点',
-      key: 'root',
-      children: objects.map((obj) => ({
-        title:
-          editingId === obj.id ? (
-            <Input
-              ref={inputRef}
-              size="small"
-              value={editingName}
-              onChange={(e) => setEditingName(e.target.value)}
-              onPressEnter={handleConfirmName}
-              onBlur={handleConfirmName}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') handleCancelName();
-                e.stopPropagation();
-              }}
-              onClick={(e) => e.stopPropagation()}
-              style={{ width: 120, height: 20, fontSize: 11 }}
-            />
-          ) : (
-            <span
-              style={{ color: obj.id === selectedId ? '#1890ff' : '#ccc', cursor: 'text' }}
-              onDoubleClick={(e) => {
-                e.stopPropagation();
-                handleDoubleClick(obj.id);
-              }}
-            >
-              {obj.name}
-            </span>
-          ),
-        key: obj.id,
-      })),
-    },
-  ];
-
-  const selectedObject = objects.find((o) => o.id === selectedId);
-
-  logger.debug(M, '渲染场景树', {
-    物体总数: objects.length,
-    物体列表: objects.map((o) => ({ id: o.id, name: o.name, visible: o.visible, locked: o.locked })),
-    选中物体ID: selectedId,
-    选中物体名称: selectedObject?.name ?? null,
-  });
-
-  const handleSelect = (keys: React.Key[]) => {
-    if (editingId) return;
-    const key = keys[0] as string | undefined;
-    if (key && key !== 'root') {
-      const obj = objects.find((o) => o.id === key);
-      logger.info(M, '选中物体', {
-        物体ID: key,
-        物体名称: obj?.name ?? '未知',
-        物体变换: obj?.transform,
-      });
-      selectObject(key);
-    } else {
-      logger.info(M, '取消选中', { 原因: key === 'root' ? '点击了根节点' : '点击空白区域' });
-      selectObject(null);
-    }
-  };
-
-  const handleToggleVisibility = (id: string) => {
-    const obj = objects.find((o) => o.id === id);
-    const newVisible = !obj?.visible;
-    logger.info(M, '切换可见性', {
-      物体ID: id,
-      物体名称: obj?.name ?? '未知',
-      当前可见: obj?.visible,
-      切换后可见: newVisible,
-    });
-    toggleVisibility(id);
-  };
-
-  const handleToggleLock = (id: string) => {
-    const obj = objects.find((o) => o.id === id);
-    const newLocked = !obj?.locked;
-    logger.info(M, '切换锁定状态', {
-      物体ID: id,
-      物体名称: obj?.name ?? '未知',
-      当前锁定: obj?.locked,
-      切换后锁定: newLocked,
-    });
-    toggleLock(id);
-  };
-
-  const handleRemove = (id: string) => {
-    const obj = objects.find((o) => o.id === id);
-    logger.warn(M, '删除物体', {
-      物体ID: id,
-      物体名称: obj?.name ?? '未知',
-      物体变换: obj?.transform,
-      剩余物体数: objects.length - 1,
-    });
-    removeObject(id);
-  };
+  const hasSelected = selectedId != null;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#1e1e1e' }}>
-      <div
-        style={{
-          padding: '8px 12px',
-          borderBottom: '1px solid #333',
-          color: '#ccc',
-          fontSize: 12,
-          fontWeight: 600,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <span>场景树</span>
-        {selectedObject && (
-          <Space size={4}>
-            <Button
-              type="text"
-              size="small"
-              icon={selectedObject.visible ? <EyeOutlined /> : <EyeInvisibleOutlined />}
-              onClick={() => handleToggleVisibility(selectedObject.id)}
-              style={{ color: '#ccc', fontSize: 12 }}
-            />
-            <Button
-              type="text"
-              size="small"
-              icon={selectedObject.locked ? <LockOutlined /> : <UnlockOutlined />}
-              onClick={() => handleToggleLock(selectedObject.id)}
-              style={{ color: '#ccc', fontSize: 12 }}
-            />
-            <Button
-              type="text"
-              size="small"
-              icon={<DeleteOutlined />}
-              onClick={() => handleRemove(selectedObject.id)}
-              style={{ color: '#ff4d4f', fontSize: 12 }}
-            />
-          </Space>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#18181c' }}>
+      <div style={{ padding: 8 }}>
+        <Input
+          prefix={<SearchOutlined />}
+          placeholder="搜索物体..."
+          size="small"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          allowClear
+        />
+      </div>
+      <div style={{ flex: 1, overflow: 'auto', padding: '0 4px' }}>
+        {filtered.length === 0 ? (
+          <div style={{ color: '#666', textAlign: 'center', padding: 24, fontSize: 13 }}>
+            {search ? '无匹配结果' : '场景为空，添加物体开始编辑'}
+          </div>
+        ) : (
+          <Tree
+            treeData={treeData}
+            selectedKeys={selectedId ? [selectedId] : []}
+            onSelect={handleSelect}
+            onDoubleClick={handleDoubleClick}
+            blockNode
+            style={{ background: 'transparent', color: '#ccc' }}
+            titleRender={(node) => {
+              if (node.key === editingKey) {
+                const obj = objects.find(o => o.id === node.key);
+                return (
+                  <span className="scene-tree-rename-input">
+                    <Input
+                      size="small"
+                      defaultValue={obj?.name}
+                      onPressEnter={(e) => handleRename(node.key as string, (e.target as HTMLInputElement).value)}
+                      onBlur={(e) => handleRename(node.key as string, e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Escape') setEditingKey(null); }}
+                      style={{ width: '80%', height: 22 }}
+                    />
+                  </span>
+                );
+              }
+              return <span>{node.title as string}</span>;
+            }}
+          />
         )}
       </div>
-      <div style={{ flex: 1, overflow: 'auto', padding: '4px 8px' }}>
-        <Tree
-          treeData={treeData}
-          selectedKeys={selectedId ? [selectedId] : []}
-          onSelect={handleSelect}
-          style={{ background: 'transparent', color: '#ccc', fontSize: 12 }}
-          defaultExpandAll
+      <div style={{ padding: '4px 8px', borderTop: '1px solid #333', display: 'flex', gap: 2 }}>
+        <Space.Compact size="small">
+          <Button
+            type="text"
+            icon={<VerticalAlignTopOutlined />}
+            disabled={!hasSelected}
+            onClick={() => selectedId && bringToFront(selectedId)}
+            title="置顶"
+          />
+          <Button
+            type="text"
+            icon={<UpOutlined />}
+            disabled={!hasSelected}
+            onClick={() => selectedId && bringForward(selectedId)}
+            title="上移"
+          />
+          <Button
+            type="text"
+            icon={<DownOutlined />}
+            disabled={!hasSelected}
+            onClick={() => selectedId && sendBackward(selectedId)}
+            title="下移"
+          />
+          <Button
+            type="text"
+            icon={<VerticalAlignBottomOutlined />}
+            disabled={!hasSelected}
+            onClick={() => selectedId && sendToBack(selectedId)}
+            title="置底"
+          />
+        </Space.Compact>
+        <div style={{ flex: 1 }} />
+        <Button
+          type="text"
+          size="small"
+          danger
+          icon={<DeleteOutlined />}
+          disabled={!hasSelected}
+          onClick={() => selectedId && removeObject(selectedId)}
         />
       </div>
     </div>
