@@ -43,7 +43,11 @@ export default function SceneTree() {
   const [editingKey, setEditingKey] = useState<string | null>(null);
 
   function handleSelect(keys: React.Key[]) {
-    if (keys.length > 0) selectObject(keys[0] as string);
+    if (keys.length > 0) {
+      selectObject(keys[0] as string);
+    } else {
+      selectObject(null);
+    }
   }
 
   function handleDoubleClick(_e: React.MouseEvent, node: EventDataNode<DataNode>) {

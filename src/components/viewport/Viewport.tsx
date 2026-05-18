@@ -79,6 +79,7 @@ function SceneContent() {
       ))}
       {selectedId && selectedObj && !selectedObj.locked && (
         <TransformControls
+          key={selectedId}
           mode={tool}
           object={selectedRef}
           space={tool === 'scale' ? 'local' : 'world'}

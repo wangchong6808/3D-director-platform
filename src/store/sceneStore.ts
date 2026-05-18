@@ -81,7 +81,7 @@ export const useSceneStore = create<SceneStore>((set, get) => ({
         id: nanoid(),
         name,
         kind,
-        position: position ? { ...position } : { x: 0, y: 0, z: 0 },
+        position: position ? { ...position } : { x: state.objects.length * 1.5, y: 0, z: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         scale: { x: 1, y: 1, z: 1 },
         color: DEFAULT_COLOR,
