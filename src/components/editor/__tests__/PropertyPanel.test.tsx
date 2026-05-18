@@ -71,4 +71,16 @@ describe('PROP: PropertyPanel', () => {
   it('空场景渲染不报错', () => {
     expect(() => render(<PropertyPanel />)).not.toThrow();
   });
+
+  it('PROP-018: 选中物体后变换面板包含整体缩放和分轴缩放', () => {
+    addObject();
+    const id = useSceneStore.getState().objects[0].id;
+    useSceneStore.getState().selectObject(id);
+    render(<PropertyPanel />);
+    expect(screen.queryByText('请在视口或场景树中选择物体')).toBeNull();
+    expect(screen.getByText('整体缩放')).toBeTruthy();
+    expect(screen.getByText('X')).toBeTruthy();
+    expect(screen.getByText('Y')).toBeTruthy();
+    expect(screen.getByText('Z')).toBeTruthy();
+  });
 });

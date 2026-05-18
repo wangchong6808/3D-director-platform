@@ -1,40 +1,115 @@
 import { useRef, useEffect } from 'react';
-import { Leva, useControls, folder } from 'leva';
+import { LevaPanel, useControls, useCreateStore, folder } from 'leva';
+import { InputNumber, Typography } from 'antd';
 import { useSceneStore } from '../../store/sceneStore';
 import type { SceneObject } from '../../types';
 
-function ObjectControls({ object }: { object: SceneObject }) {
+const { Text } = Typography;
+
+function ScaleControls({ object }: { object: SceneObject }) {
+  const updateTransform = useSceneStore(s => s.updateTransform);
+  const saveHistory = useSceneStore(s => s.saveHistory);
+  const savingHistory = useRef(false);
+  const batchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const isUpdating = useRef(false);
+  const updateTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  function withHistory(fn: () => void) {
+    if (!isUpdating.current) {
+      isUpdating.current = true;
+      if (!savingHistory.current) {
+        savingHistory.current = true;
+        saveHistory();
+      }
+      fn();
+      clearTimeout(updateTimer.current);
+      updateTimer.current = setTimeout(() => {
+        isUpdating.current = false;
+      }, 50);
+      clearTimeout(batchTimer.current);
+      batchTimer.current = setTimeout(() => {
+        savingHistory.current = false;
+      }, 300);
+    }
+  }
+
+  function handleUniformChange(v: number | null) {
+    if (v == null) return;
+    withHistory(() => updateTransform(object.id, undefined, undefined, { x: v, y: v, z: v }));
+  }
+
+  function handleAxisChange(axis: 'x' | 'y' | 'z', v: number | null) {
+    if (v == null) return;
+    withHistory(() => updateTransform(object.id, undefined, undefined, { [axis]: v }));
+  }
+
+  return (
+    <div style={{ padding: '4px 12px 8px' }}>
+      <div style={{ marginBottom: 8 }}>
+        <Text style={{ color: '#ddd', fontSize: 12, display: 'block', marginBottom: 2 }}>整体缩放</Text>
+        <InputNumber
+          size="small"
+          min={0.1}
+          max={10}
+          step={0.1}
+          value={object.scale.x}
+          onChange={handleUniformChange}
+          style={{ width: '100%' }}
+          stringMode={false}
+        />
+      </div>
+      <div style={{ display: 'flex', gap: 4 }}>
+        {(['x', 'y', 'z'] as const).map(axis => (
+          <div key={axis} style={{ flex: 1 }}>
+            <Text style={{ color: '#999', fontSize: 11, display: 'block', marginBottom: 2 }}>{axis.toUpperCase()}</Text>
+            <InputNumber
+              size="small"
+              min={0.1}
+              max={10}
+              step={0.1}
+              value={object.scale[axis]}
+              onChange={(v) => handleAxisChange(axis, v)}
+              style={{ width: '100%' }}
+              stringMode={false}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ObjectControls({ object, store }: { object: SceneObject; store: ReturnType<typeof useCreateStore> }) {
   const updateObject = useSceneStore(s => s.updateObject);
   const updateTransform = useSceneStore(s => s.updateTransform);
   const saveHistory = useSceneStore(s => s.saveHistory);
   const savingHistory = useRef(false);
   const batchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const lastObjectId = useRef<string | null>(null);
-  const controlsReady = useRef(false);
-  const readyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-
-  if (lastObjectId.current !== object.id) {
-    controlsReady.current = false;
-    lastObjectId.current = object.id;
-    clearTimeout(readyTimer.current);
-    readyTimer.current = setTimeout(() => {
-      controlsReady.current = true;
-    }, 0);
-  }
+  const isUpdating = useRef(true);
+  const updateTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
+    isUpdating.current = true;
+    const timer = setTimeout(() => {
+      isUpdating.current = false;
+    }, 0);
     return () => {
-      clearTimeout(readyTimer.current);
+      clearTimeout(timer);
     };
-  }, []);
+  }, [object.id]);
 
   function withHistory(fn: () => void) {
-    if (!controlsReady.current) return;
+    if (isUpdating.current) return;
+    isUpdating.current = true;
     if (!savingHistory.current) {
       savingHistory.current = true;
       saveHistory();
     }
     fn();
+    clearTimeout(updateTimer.current);
+    updateTimer.current = setTimeout(() => {
+      isUpdating.current = false;
+    }, 0);
     clearTimeout(batchTimer.current);
     batchTimer.current = setTimeout(() => {
       savingHistory.current = false;
@@ -83,21 +158,6 @@ function ObjectControls({ object }: { object: SceneObject }) {
         min: -Math.PI * 2, max: Math.PI * 2, step: 0.01,
         onChange: (v: number) => withHistory(() => updateTransform(object.id, undefined, { z: v })),
       },
-      '缩放 X': {
-        value: object.scale.x,
-        min: 0.1, max: 10, step: 0.1,
-        onChange: (v: number) => withHistory(() => updateTransform(object.id, undefined, undefined, { x: v })),
-      },
-      '缩放 Y': {
-        value: object.scale.y,
-        min: 0.1, max: 10, step: 0.1,
-        onChange: (v: number) => withHistory(() => updateTransform(object.id, undefined, undefined, { y: v })),
-      },
-      '缩放 Z': {
-        value: object.scale.z,
-        min: 0.1, max: 10, step: 0.1,
-        onChange: (v: number) => withHistory(() => updateTransform(object.id, undefined, undefined, { z: v })),
-      },
     }),
     '外观': folder({
       color: {
@@ -119,7 +179,7 @@ function ObjectControls({ object }: { object: SceneObject }) {
         disabled: true,
       },
     }),
-  }), [object.id, object.name, object.position.x, object.position.y, object.position.z, object.rotation.x, object.rotation.y, object.rotation.z, object.scale.x, object.scale.y, object.scale.z, object.color, object.visible, object.locked, object.occlusionIndex]);
+  }), { store }, [object.id, object.name, object.position.x, object.position.y, object.position.z, object.rotation.x, object.rotation.y, object.rotation.z, object.color, object.visible, object.locked, object.occlusionIndex]);
 
   return null;
 }
@@ -127,14 +187,17 @@ function ObjectControls({ object }: { object: SceneObject }) {
 export default function PropertyPanel() {
   const selectedId = useSceneStore(s => s.selectedId);
   const selectedObj = useSceneStore(s => s.objects.find(o => o.id === selectedId));
+  const store = useCreateStore();
 
   return (
     <div style={{ height: '100%', overflow: 'auto', background: '#181818' }}>
       {selectedId && selectedObj ? (
         <>
-          <Leva
+          <LevaPanel
             key={selectedObj.id}
+            store={store}
             flat
+            fill
             collapsed={false}
             theme={{
               colors: {
@@ -144,14 +207,39 @@ export default function PropertyPanel() {
                 accent1: '#1677ff',
                 accent2: '#4096ff',
                 accent3: '#69b1ff',
-                highlight1: '#333',
-                highlight2: '#444',
-                highlight3: '#555',
+                highlight1: '#555',
+                highlight2: '#777',
+                highlight3: '#999',
                 vivid1: '#ff4d4f',
+                folderWidgetColor: '#aaa',
+                folderTextColor: '#ddd',
               },
             }}
           />
-          <ObjectControls object={selectedObj} />
+          <ObjectControls object={selectedObj} store={store} />
+          <div style={{
+            borderTop: '1px solid #333',
+            margin: '0 0 0 0',
+            padding: '0 0 4px',
+          }}>
+            <div style={{
+              padding: '6px 12px 2px',
+              fontSize: 12,
+              fontWeight: 500,
+              color: '#ddd',
+              background: '#222',
+              borderBottom: '1px solid #333',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              cursor: 'pointer',
+              userSelect: 'none',
+            }}>
+              <svg width="12" height="8" viewBox="0 0 9 5" xmlns="http://www.w3.org/2000/svg" style={{ fill: '#aaa' }}><path d="M3.8 4.4c.4.3 1 .3 1.4 0L8 1.7A1 1 0 007.4 0H1.6a1 1 0 00-.7 1.7l3 2.7z"></path></svg>
+              缩放
+            </div>
+            <ScaleControls object={selectedObj} />
+          </div>
         </>
       ) : (
         <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: '#666', fontSize: 13 }}>

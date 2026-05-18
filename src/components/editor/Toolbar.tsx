@@ -157,7 +157,7 @@ export default function Toolbar() {
           icon={showGrid ? <EyeOutlined /> : <EyeInvisibleOutlined />}
           size="small"
           onClick={toggleGrid}
-        />
+        >网格</Button>
       </Tooltip>
 
       <Divider type="vertical" />

@@ -286,6 +286,39 @@ describe('SCN-TRF: updateTransform', () => {
     useSceneStore.getState().updateTransform(id, { x: 5 });
     expect(useSceneStore.getState().history.length).toBeGreaterThan(prevLen);
   });
+
+  it('SCN-TRF-006: 整体缩放同时更新XYZ三个轴', () => {
+    const id = useSceneStore.getState().objects[0].id;
+    useSceneStore.getState().updateTransform(id, undefined, undefined, { x: 3, y: 3, z: 3 });
+    expect(useSceneStore.getState().objects[0].scale).toEqual({ x: 3, y: 3, z: 3 });
+  });
+
+  it('SCN-TRF-007: 单独缩放X轴不影响Y和Z', () => {
+    const id = useSceneStore.getState().objects[0].id;
+    useSceneStore.getState().updateTransform(id, undefined, undefined, { x: 2, y: 2, z: 2 });
+    useSceneStore.getState().updateTransform(id, undefined, undefined, { x: 5 });
+    const scale = useSceneStore.getState().objects[0].scale;
+    expect(scale.x).toBe(5);
+    expect(scale.y).toBe(2);
+    expect(scale.z).toBe(2);
+  });
+
+  it('SCN-TRF-008: 整体缩放覆盖之前的非均匀缩放', () => {
+    const id = useSceneStore.getState().objects[0].id;
+    useSceneStore.getState().updateTransform(id, undefined, undefined, { x: 3, y: 1, z: 2 });
+    useSceneStore.getState().updateTransform(id, undefined, undefined, { x: 4, y: 4, z: 4 });
+    expect(useSceneStore.getState().objects[0].scale).toEqual({ x: 4, y: 4, z: 4 });
+  });
+
+  it('SCN-TRF-009: 缩放操作保留位置和旋转不变', () => {
+    const id = useSceneStore.getState().objects[0].id;
+    useSceneStore.getState().updateTransform(id, { x: 10, y: 5, z: -3 }, { x: 0, y: Math.PI, z: 0 });
+    useSceneStore.getState().updateTransform(id, undefined, undefined, { x: 2, y: 2, z: 2 });
+    const obj = useSceneStore.getState().objects[0];
+    expect(obj.position).toEqual({ x: 10, y: 5, z: -3 });
+    expect(obj.rotation.y).toBeCloseTo(Math.PI);
+    expect(obj.scale).toEqual({ x: 2, y: 2, z: 2 });
+  });
 });
 
 describe('TOL: setTool / toggleGrid', () => {
