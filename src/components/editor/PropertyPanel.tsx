@@ -1,10 +1,29 @@
 import { useRef, useEffect } from 'react';
 import { LevaPanel, useControls, useCreateStore, folder } from 'leva';
-import { InputNumber, Typography } from 'antd';
+import { InputNumber, Typography, Button, Tooltip } from 'antd';
+import { VerticalAlignBottomOutlined } from '@ant-design/icons';
 import { useSceneStore } from '../../store/sceneStore';
 import type { SceneObject } from '../../types';
 
 const { Text } = Typography;
+
+function getHalfHeight(kind: string): number {
+  switch (kind) {
+    case 'box': case 'sphere': case 'cylinder': case 'cone':
+      return 0.5;
+    case 'torus':
+      return 0.7;
+    case 'person':
+      return 0.4;
+    case 'car': case 'sofa':
+      return 0.1;
+    case 'house': case 'table': case 'chair': case 'cup':
+    case 'tree': case 'bed': case 'fence':
+      return 0;
+    default:
+      return 0.5;
+  }
+}
 
 function ScaleControls({ object }: { object: SceneObject }) {
   const updateTransform = useSceneStore(s => s.updateTransform);
@@ -230,12 +249,37 @@ function ObjectControls({ object, store }: { object: SceneObject; store: ReturnT
 export default function PropertyPanel() {
   const selectedId = useSceneStore(s => s.selectedId);
   const selectedObj = useSceneStore(s => s.objects.find(o => o.id === selectedId));
+  const saveHistory = useSceneStore(s => s.saveHistory);
+  const updateTransform = useSceneStore(s => s.updateTransform);
+
+  function handleDropToGround() {
+    if (!selectedObj || selectedObj.locked) return;
+    const halfH = getHalfHeight(selectedObj.kind);
+    const targetY = halfH * selectedObj.scale.y;
+    if (Math.abs(selectedObj.position.y - targetY) < 0.001) return;
+    saveHistory();
+    updateTransform(selectedObj.id, { y: targetY });
+  }
 
   return (
     <div style={{ height: '100%', overflow: 'auto', background: '#181818' }}>
       {selectedId && selectedObj ? (
         <>
           <ObjectPropertyEditor key={selectedObj.id} object={selectedObj} />
+          <div style={{ padding: '4px 12px', borderTop: '1px solid #333' }}>
+            <Tooltip title="将物体Y轴移动至底部接触地面">
+              <Button
+                type="default"
+                size="small"
+                icon={<VerticalAlignBottomOutlined />}
+                onClick={handleDropToGround}
+                disabled={selectedObj.locked}
+                style={{ width: '100%' }}
+              >
+                落回地面
+              </Button>
+            </Tooltip>
+          </div>
           <div style={{
             borderTop: '1px solid #333',
             margin: '0 0 0 0',

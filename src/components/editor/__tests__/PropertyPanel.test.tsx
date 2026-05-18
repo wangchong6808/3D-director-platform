@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { useSceneStore } from '../../../store/sceneStore';
 import PropertyPanel from '../PropertyPanel';
 
@@ -82,5 +82,50 @@ describe('PROP: PropertyPanel', () => {
     expect(screen.getByText('X')).toBeTruthy();
     expect(screen.getByText('Y')).toBeTruthy();
     expect(screen.getByText('Z')).toBeTruthy();
+  });
+
+  it('PROP-019: 选中物体后显示落回地面按钮', () => {
+    addObject();
+    const id = useSceneStore.getState().objects[0].id;
+    useSceneStore.getState().selectObject(id);
+    render(<PropertyPanel />);
+    expect(screen.getByText('落回地面')).toBeTruthy();
+  });
+
+  it('PROP-020: 未选中物体时不显示落回地面按钮', () => {
+    render(<PropertyPanel />);
+    expect(screen.queryByText('落回地面')).toBeNull();
+  });
+
+  it('PROP-021: 锁定物体时落回地面按钮禁用', () => {
+    addObject();
+    const id = useSceneStore.getState().objects[0].id;
+    useSceneStore.getState().updateObject(id, { locked: true });
+    useSceneStore.getState().selectObject(id);
+    render(<PropertyPanel />);
+    const btn = screen.getByText('落回地面').closest('button');
+    expect(btn?.disabled).toBe(true);
+  });
+
+  it('PROP-022: 点击落回地面将box物体Y轴移至地面', () => {
+    addObject();
+    const id = useSceneStore.getState().objects[0].id;
+    useSceneStore.getState().updateTransform(id, { y: 5 });
+    useSceneStore.getState().selectObject(id);
+    render(<PropertyPanel />);
+    fireEvent.click(screen.getByText('落回地面'));
+    const obj = useSceneStore.getState().objects[0];
+    expect(obj.position.y).toBe(0.5); // box half-height = 0.5 * scale 1
+  });
+
+  it('PROP-023: 点击落回地面记录历史', () => {
+    addObject();
+    const id = useSceneStore.getState().objects[0].id;
+    useSceneStore.getState().updateTransform(id, { y: 5 });
+    useSceneStore.getState().selectObject(id);
+    const historyLen = useSceneStore.getState().history.length;
+    render(<PropertyPanel />);
+    fireEvent.click(screen.getByText('落回地面'));
+    expect(useSceneStore.getState().history.length).toBeGreaterThan(historyLen);
   });
 });
