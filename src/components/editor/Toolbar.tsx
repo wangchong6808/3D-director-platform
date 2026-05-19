@@ -91,7 +91,7 @@ export default function Toolbar() {
     const reader = new FileReader();
     reader.onload = () => {
       const buffer = reader.result as ArrayBuffer;
-      addObject('box', undefined, buffer, file.name);
+      addObject('box', { x: 0, y: 0, z: 0 }, buffer, file.name);
       logger.info(`已导入模型: ${file.name}`);
     };
     reader.readAsArrayBuffer(file);

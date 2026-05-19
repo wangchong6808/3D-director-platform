@@ -1,8 +1,9 @@
-import { useRef, useMemo, useEffect, forwardRef } from 'react';
-import { useGLTF } from '@react-three/drei';
+import { useRef, forwardRef } from 'react';
 import { useCursor } from '@react-three/drei';
 import * as THREE from 'three';
+import { suspend } from 'suspend-react';
 import type { SceneObject } from '../../types';
+import { parseGLTFBuffer } from '../../utils/sceneUtils';
 
 interface Props {
   object: SceneObject;
@@ -283,19 +284,7 @@ function CompoundObject({ kind, color }: { kind: string; color: string }) {
 }
 
 function ImportedModel({ modelData }: { modelData: ArrayBuffer }) {
-  const blobUrl = useMemo(() => {
-    const blob = new Blob([modelData], { type: 'application/octet-stream' });
-    return URL.createObjectURL(blob);
-  }, [modelData]);
-
-  useEffect(() => {
-    return () => {
-      URL.revokeObjectURL(blobUrl);
-    };
-  }, [blobUrl]);
-
-  const { scene } = useGLTF(blobUrl);
-
+  const scene = suspend(() => parseGLTFBuffer(modelData), [modelData]);
   return <primitive object={scene} />;
 }
 
