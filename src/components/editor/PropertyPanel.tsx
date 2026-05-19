@@ -137,6 +137,13 @@ function ObjectControls({ object, store }: { object: SceneObject; store: ReturnT
   const batchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const isUpdating = useRef(true);
   const updateTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const prevXform = useRef('');
+
+  const xformKey = `${object.position.x},${object.position.y},${object.position.z},${object.rotation.x},${object.rotation.y},${object.rotation.z},${object.scale.x},${object.scale.y},${object.scale.z}`;
+  if (prevXform.current !== xformKey) {
+    isUpdating.current = true;
+    prevXform.current = xformKey;
+  }
 
   useEffect(() => {
     isUpdating.current = true;
@@ -146,7 +153,7 @@ function ObjectControls({ object, store }: { object: SceneObject; store: ReturnT
     return () => {
       clearTimeout(timer);
     };
-  }, [object.id]);
+  }, [object.position.x, object.position.y, object.position.z, object.rotation.x, object.rotation.y, object.rotation.z, object.scale.x, object.scale.y, object.scale.z]);
 
   function withHistory(fn: () => void) {
     if (isUpdating.current) return;

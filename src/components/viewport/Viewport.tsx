@@ -19,6 +19,9 @@ function SceneContent() {
   const selectedRef = useRef<THREE.Object3D>(null!);
   const objectRefs = useRef<Map<string, THREE.Group>>(new Map());
   const transformStarted = useRef(false);
+  const dragPos = useRef(new THREE.Vector3());
+  const dragRot = useRef(new THREE.Euler());
+  const dragScl = useRef(new THREE.Vector3(1, 1, 1));
 
   useEffect(() => {
     if (selectedId) {
@@ -36,21 +39,28 @@ function SceneContent() {
 
   const handleTransformEnd = useCallback(() => {
     transformStarted.current = false;
-  }, []);
+    const id = selectedId;
+    if (!id) return;
+    const p = dragPos.current.clone();
+    const r = dragRot.current.clone();
+    const s = dragScl.current.clone();
+    requestAnimationFrame(() => {
+      updateTransform(
+        id,
+        { x: p.x, y: p.y, z: p.z },
+        { x: r.x, y: r.y, z: r.z },
+        { x: s.x, y: s.y, z: s.z }
+      );
+    });
+  }, [selectedId, updateTransform]);
 
   const handleTransform = useCallback(() => {
     const ref = selectedRef.current;
-    if (!ref || !selectedId) return;
-    const p = ref.position;
-    const r = ref.rotation;
-    const s = ref.scale;
-    updateTransform(
-      selectedId,
-      { x: p.x, y: p.y, z: p.z },
-      { x: r.x, y: r.y, z: r.z },
-      { x: s.x, y: s.y, z: s.z }
-    );
-  }, [selectedId, updateTransform]);
+    if (!ref) return;
+    dragPos.current.copy(ref.position);
+    dragRot.current.copy(ref.rotation);
+    dragScl.current.copy(ref.scale);
+  }, []);
 
   const selectedObj = objects.find(o => o.id === selectedId);
 
