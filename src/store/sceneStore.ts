@@ -36,6 +36,10 @@ interface SceneStore {
   sceneName: string;
   history: SceneObject[][];
   historyIndex: number;
+  autoRotate: boolean;
+  autoRotateSpeed: number;
+  autoRotateDirection: 'cw' | 'ccw';
+  clipboard: SceneObject | null;
 
   addObject: (kind: ObjectKind, position?: Vec3, modelData?: ArrayBuffer, modelPath?: string) => void;
   removeObject: (id: string) => void;
@@ -56,6 +60,11 @@ interface SceneStore {
   loadScene: (data: SceneData) => void;
   getSceneData: () => SceneData;
   clearScene: () => void;
+  setAutoRotate: (enabled: boolean) => void;
+  setAutoRotateSpeed: (speed: number) => void;
+  setAutoRotateDirection: (dir: 'cw' | 'ccw') => void;
+  copyObject: (id: string) => void;
+  pasteObject: () => void;
 }
 
 function pushHistory(history: SceneObject[][], historyIndex: number, objects: SceneObject[]): { history: SceneObject[][]; historyIndex: number } {
@@ -78,6 +87,10 @@ export const useSceneStore = create<SceneStore>((set, get) => ({
   sceneName: 'untitled',
   history: [[]],
   historyIndex: 0,
+  autoRotate: false,
+  autoRotateSpeed: 2,
+  autoRotateDirection: 'ccw',
+  clipboard: null,
 
   addObject: (kind, position, modelData, modelPath) => {
     set(state => {
@@ -290,6 +303,49 @@ export const useSceneStore = create<SceneStore>((set, get) => ({
       selectedId: null,
       history: [[]],
       historyIndex: 0,
+    });
+  },
+
+  setAutoRotate: (enabled) => set({ autoRotate: enabled }),
+  setAutoRotateSpeed: (speed) => set({ autoRotateSpeed: speed }),
+  setAutoRotateDirection: (dir) => set({ autoRotateDirection: dir }),
+
+  copyObject: (id) => {
+    const obj = get().objects.find(o => o.id === id);
+    if (!obj) return;
+    set({
+      clipboard: {
+        ...obj,
+        position: { ...obj.position },
+        rotation: { ...obj.rotation },
+        scale: { ...obj.scale },
+        modelData: obj.modelData ? obj.modelData.slice(0) : undefined,
+      },
+    });
+  },
+
+  pasteObject: () => {
+    const { clipboard, objects } = get();
+    if (!clipboard) return;
+    const maxOi = objects.reduce((max, o) => Math.max(max, o.occlusionIndex), -1);
+    const name = nextName(objects, clipboard.kind);
+    const newObj: SceneObject = {
+      ...clipboard,
+      id: nanoid(),
+      name,
+      position: { ...clipboard.position },
+      rotation: { ...clipboard.rotation },
+      scale: { ...clipboard.scale },
+      modelData: clipboard.modelData ? clipboard.modelData.slice(0) : undefined,
+      occlusionIndex: maxOi + 1,
+    };
+    newObj.position.x += 1.5;
+    newObj.position.z += 1.5;
+    const newObjects = [...objects, newObj];
+    set({
+      objects: newObjects,
+      selectedId: newObj.id,
+      ...pushHistory(get().history, get().historyIndex, newObjects),
     });
   },
 }));

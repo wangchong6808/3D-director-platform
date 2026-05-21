@@ -12,6 +12,9 @@ function SceneContent() {
   const showGrid = useSceneStore(s => s.showGrid);
   const groundColor = useSceneStore(s => s.groundColor);
   const gridColor = useSceneStore(s => s.gridColor);
+  const autoRotate = useSceneStore(s => s.autoRotate);
+  const autoRotateSpeed = useSceneStore(s => s.autoRotateSpeed);
+  const autoRotateDirection = useSceneStore(s => s.autoRotateDirection);
   const selectObject = useSceneStore(s => s.selectObject);
   const updateTransform = useSceneStore(s => s.updateTransform);
   const saveHistory = useSceneStore(s => s.saveHistory);
@@ -72,7 +75,7 @@ function SceneContent() {
       <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
         <GizmoViewport />
       </GizmoHelper>
-      <OrbitControls enableDamping dampingFactor={0.1} makeDefault />
+      <OrbitControls enableDamping dampingFactor={0.1} makeDefault autoRotate={autoRotate} autoRotateSpeed={autoRotateDirection === 'cw' ? -autoRotateSpeed : autoRotateSpeed} />
       {objects.map(obj => (
         <SceneObject3D
           key={obj.id}

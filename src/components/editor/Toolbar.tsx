@@ -6,6 +6,7 @@ import {
   UndoOutlined, RedoOutlined,
   SaveOutlined, FolderOpenOutlined, ImportOutlined, ExportOutlined,
   EyeOutlined, EyeInvisibleOutlined, PlusOutlined, AppstoreOutlined,
+  CopyOutlined, SnippetsOutlined,
 } from '@ant-design/icons';
 import { useSceneStore } from '../../store/sceneStore';
 import { demoScenes } from '../../utils/demoScenes';
@@ -57,6 +58,16 @@ export default function Toolbar() {
   const getSceneData = useSceneStore(s => s.getSceneData);
   const clearScene = useSceneStore(s => s.clearScene);
   const sceneName = useSceneStore(s => s.sceneName);
+  const selectedId = useSceneStore(s => s.selectedId);
+  const autoRotate = useSceneStore(s => s.autoRotate);
+  const autoRotateSpeed = useSceneStore(s => s.autoRotateSpeed);
+  const autoRotateDirection = useSceneStore(s => s.autoRotateDirection);
+  const clipboard = useSceneStore(s => s.clipboard);
+  const copyObject = useSceneStore(s => s.copyObject);
+  const pasteObject = useSceneStore(s => s.pasteObject);
+  const setAutoRotate = useSceneStore(s => s.setAutoRotate);
+  const setAutoRotateSpeed = useSceneStore(s => s.setAutoRotateSpeed);
+  const setAutoRotateDirection = useSceneStore(s => s.setAutoRotateDirection);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const jsonInputRef = useRef<HTMLInputElement>(null);
@@ -157,6 +168,55 @@ export default function Toolbar() {
 
       <Divider type="vertical" />
 
+      <Tooltip title={autoRotate ? '停止旋转' : '自动旋转'}>
+        <Button
+          type={autoRotate ? 'primary' : 'text'}
+          icon={autoRotate ? <span style={{ fontSize: 12 }}>⏸</span> : <span style={{ fontSize: 12 }}>▶</span>}
+          size="small"
+          onClick={() => setAutoRotate(!autoRotate)}
+        />
+      </Tooltip>
+      {autoRotate && (
+        <>
+          <Space.Compact size="small">
+            <Tooltip title="逆时针">
+              <Button
+                type={autoRotateDirection === 'ccw' ? 'primary' : 'text'}
+                size="small"
+                onClick={() => setAutoRotateDirection('ccw')}
+                style={{ fontSize: 11, padding: '0 6px' }}
+              >↺</Button>
+            </Tooltip>
+            <Tooltip title="顺时针">
+              <Button
+                type={autoRotateDirection === 'cw' ? 'primary' : 'text'}
+                size="small"
+                onClick={() => setAutoRotateDirection('cw')}
+                style={{ fontSize: 11, padding: '0 6px' }}
+              >↻</Button>
+            </Tooltip>
+          </Space.Compact>
+          <Dropdown
+            menu={{
+              items: [
+                { key: '0.5', label: '0.5×', onClick: () => setAutoRotateSpeed(0.5) },
+                { key: '1', label: '1×', onClick: () => setAutoRotateSpeed(1) },
+                { key: '2', label: '2×', onClick: () => setAutoRotateSpeed(2) },
+                { key: '3', label: '3×', onClick: () => setAutoRotateSpeed(3) },
+                { key: '5', label: '5×', onClick: () => setAutoRotateSpeed(5) },
+              ],
+              selectable: true,
+              selectedKeys: [String(autoRotateSpeed)],
+            }}
+            trigger={['click']}
+          >
+            <Button type="text" size="small" style={{ fontSize: 11 }}>{autoRotateSpeed}×</Button>
+          </Dropdown>
+        </>
+      )}
+
+      <Divider type="vertical" />
+
       <Tooltip title="网格 (G)">
         <Button
           type={showGrid ? 'primary' : 'text'}
@@ -201,6 +261,27 @@ export default function Toolbar() {
           size="small"
           disabled={!canRedo}
           onClick={redo}
+        />
+      </Tooltip>
+
+      <Divider type="vertical" />
+
+      <Tooltip title="复制 (Ctrl+C)">
+        <Button
+          type="text"
+          icon={<CopyOutlined />}
+          size="small"
+          disabled={!selectedId}
+          onClick={() => selectedId && copyObject(selectedId)}
+        />
+      </Tooltip>
+      <Tooltip title="粘贴 (Ctrl+V)">
+        <Button
+          type="text"
+          icon={<SnippetsOutlined />}
+          size="small"
+          disabled={!clipboard}
+          onClick={pasteObject}
         />
       </Tooltip>
 

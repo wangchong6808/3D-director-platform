@@ -259,29 +259,70 @@ function CompoundObject({ kind, color }: { kind: string; color: string }) {
     );
     case 'car': return (
       <group>
-        <mesh position={[0, 0.3, 0]}>
-          <boxGeometry args={[1.5, 0.4, 0.8]} />
+        {/* Main chassis */}
+        <mesh position={[0, 0.4, 0]}>
+          <boxGeometry args={[4.0, 0.4, 1.8]} />
           <meshStandardMaterial color={color} />
         </mesh>
-        <mesh position={[0, 0.6, 0.1]}>
-          <boxGeometry args={[0.7, 0.25, 0.6]} />
+        {/* Cabin */}
+        <mesh position={[-0.3, 0.72, 0]}>
+          <boxGeometry args={[1.8, 0.3, 1.7]} />
           <meshStandardMaterial color={c.clone().multiplyScalar(0.85)} />
         </mesh>
+        {/* Hood */}
+        <mesh position={[1.05, 0.58, 0]}>
+          <boxGeometry args={[1.3, 0.06, 1.6]} />
+          <meshStandardMaterial color={c.clone().multiplyScalar(0.7)} />
+        </mesh>
+        {/* Trunk */}
+        <mesh position={[-1.2, 0.58, 0]}>
+          <boxGeometry args={[1.0, 0.06, 1.6]} />
+          <meshStandardMaterial color={c.clone().multiplyScalar(0.7)} />
+        </mesh>
+        {/* Front bumper */}
+        <mesh position={[2.0, 0.24, 0]}>
+          <boxGeometry args={[0.15, 0.12, 1.7]} />
+          <meshStandardMaterial color="#444444" />
+        </mesh>
+        {/* Rear bumper */}
+        <mesh position={[-2.0, 0.24, 0]}>
+          <boxGeometry args={[0.15, 0.12, 1.7]} />
+          <meshStandardMaterial color="#444444" />
+        </mesh>
+        {/* Headlights */}
+        <mesh position={[2.03, 0.48, 0.5]}>
+          <boxGeometry args={[0.08, 0.08, 0.3]} />
+          <meshStandardMaterial color="#FFFFCC" emissive="#FFFFCC" emissiveIntensity={0.5} />
+        </mesh>
+        <mesh position={[2.03, 0.48, -0.5]}>
+          <boxGeometry args={[0.08, 0.08, 0.3]} />
+          <meshStandardMaterial color="#FFFFCC" emissive="#FFFFCC" emissiveIntensity={0.5} />
+        </mesh>
+        {/* Taillights */}
+        <mesh position={[-2.03, 0.48, 0.5]}>
+          <boxGeometry args={[0.08, 0.08, 0.3]} />
+          <meshStandardMaterial color="#FF0000" emissive="#FF0000" emissiveIntensity={0.4} />
+        </mesh>
+        <mesh position={[-2.03, 0.48, -0.5]}>
+          <boxGeometry args={[0.08, 0.08, 0.3]} />
+          <meshStandardMaterial color="#FF0000" emissive="#FF0000" emissiveIntensity={0.4} />
+        </mesh>
+        {/* Wheels */}
         <group rotation={[Math.PI / 2, 0, 0]}>
-          <mesh position={[-0.5, 0.12, 0.35]}>
-            <cylinderGeometry args={[0.18, 0.18, 0.1, 16]} />
+          <mesh position={[1.3, 0.88, -0.32]}>
+            <cylinderGeometry args={[0.32, 0.32, 0.22, 16]} />
             <meshStandardMaterial color="#222222" />
           </mesh>
-          <mesh position={[0.5, 0.12, 0.35]}>
-            <cylinderGeometry args={[0.18, 0.18, 0.1, 16]} />
+          <mesh position={[-1.3, 0.88, -0.32]}>
+            <cylinderGeometry args={[0.32, 0.32, 0.22, 16]} />
             <meshStandardMaterial color="#222222" />
           </mesh>
-          <mesh position={[-0.5, 0.12, -0.35]}>
-            <cylinderGeometry args={[0.18, 0.18, 0.1, 16]} />
+          <mesh position={[1.3, -0.88, -0.32]}>
+            <cylinderGeometry args={[0.32, 0.32, 0.22, 16]} />
             <meshStandardMaterial color="#222222" />
           </mesh>
-          <mesh position={[0.5, 0.12, -0.35]}>
-            <cylinderGeometry args={[0.18, 0.18, 0.1, 16]} />
+          <mesh position={[-1.3, -0.88, -0.32]}>
+            <cylinderGeometry args={[0.32, 0.32, 0.22, 16]} />
             <meshStandardMaterial color="#222222" />
           </mesh>
         </group>

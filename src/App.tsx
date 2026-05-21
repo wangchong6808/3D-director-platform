@@ -17,7 +17,10 @@ export default function App() {
   const undo = useSceneStore(s => s.undo);
   const redo = useSceneStore(s => s.redo);
   const removeObject = useSceneStore(s => s.removeObject);
+  const copyObject = useSceneStore(s => s.copyObject);
+  const pasteObject = useSceneStore(s => s.pasteObject);
   const selectedId = useSceneStore(s => s.selectedId);
+  const clipboard = useSceneStore(s => s.clipboard);
   const getSceneData = useSceneStore(s => s.getSceneData);
   const sceneName = useSceneStore(s => s.sceneName);
 
@@ -42,6 +45,18 @@ export default function App() {
         case 'Z':
           if (ctrl && shift) { e.preventDefault(); redo(); }
           break;
+        case 'c':
+          if (ctrl && !shift) {
+            e.preventDefault();
+            if (selectedId) copyObject(selectedId);
+          }
+          break;
+        case 'v':
+          if (ctrl && !shift) {
+            e.preventDefault();
+            if (clipboard) pasteObject();
+          }
+          break;
         case 's':
           if (ctrl) {
             e.preventDefault();
@@ -56,7 +71,7 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [setTool, toggleGrid, undo, redo, removeObject, selectedId, getSceneData, sceneName]);
+  }, [setTool, toggleGrid, undo, redo, removeObject, copyObject, pasteObject, selectedId, clipboard, getSceneData, sceneName]);
 
   return (
     <div style={{ width: '100vw', height: '100vh', display: 'flex', flexDirection: 'column', background: '#141414', color: '#ccc' }}>

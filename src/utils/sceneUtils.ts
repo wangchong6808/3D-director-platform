@@ -198,15 +198,34 @@ function objectToMesh(obj: SceneObject): THREE.Object3D {
       addMesh(group, cone(0.35, 0.7, 8, mat(color.clone().multiplyScalar(0.8))), [0, 1.5, 0]);
       break;
     case 'car': {
-      addMesh(group, box(1.5, 0.4, 0.8, mat()), [0, 0.3, 0]);
-      addMesh(group, box(0.7, 0.25, 0.6, mat(color.clone().multiplyScalar(0.85))), [0, 0.6, 0.1]);
+      // Main chassis
+      addMesh(group, box(4.0, 0.4, 1.8, mat()), [0, 0.4, 0]);
+      // Cabin
+      addMesh(group, box(1.8, 0.3, 1.7, mat(color.clone().multiplyScalar(0.85))), [-0.3, 0.72, 0]);
+      // Hood
+      addMesh(group, box(1.3, 0.06, 1.6, mat(darken)), [1.05, 0.58, 0]);
+      // Trunk
+      addMesh(group, box(1.0, 0.06, 1.6, mat(darken)), [-1.2, 0.58, 0]);
+      // Front bumper
+      addMesh(group, box(0.15, 0.12, 1.7, mat('#444444')), [2.0, 0.24, 0]);
+      // Rear bumper
+      addMesh(group, box(0.15, 0.12, 1.7, mat('#444444')), [-2.0, 0.24, 0]);
+      // Headlights
+      const lightMat = new THREE.MeshStandardMaterial({ color: '#FFFFCC', emissive: '#FFFFCC', emissiveIntensity: 0.5 });
+      addMesh(group, box(0.08, 0.08, 0.3, lightMat), [2.03, 0.48, 0.5]);
+      addMesh(group, box(0.08, 0.08, 0.3, lightMat), [2.03, 0.48, -0.5]);
+      // Taillights
+      const tailMat = new THREE.MeshStandardMaterial({ color: '#FF0000', emissive: '#FF0000', emissiveIntensity: 0.4 });
+      addMesh(group, box(0.08, 0.08, 0.3, tailMat), [-2.03, 0.48, 0.5]);
+      addMesh(group, box(0.08, 0.08, 0.3, tailMat), [-2.03, 0.48, -0.5]);
+      // Wheels
       const wheelGrp = new THREE.Group();
       wheelGrp.rotation.set(Math.PI / 2, 0, 0);
       const wheelMat = mat('#222222');
-      addMesh(wheelGrp, cylinder(0.18, 0.18, 0.1, 16, wheelMat), [-0.5, 0.12, 0.35]);
-      addMesh(wheelGrp, cylinder(0.18, 0.18, 0.1, 16, wheelMat), [0.5, 0.12, 0.35]);
-      addMesh(wheelGrp, cylinder(0.18, 0.18, 0.1, 16, wheelMat), [-0.5, 0.12, -0.35]);
-      addMesh(wheelGrp, cylinder(0.18, 0.18, 0.1, 16, wheelMat), [0.5, 0.12, -0.35]);
+      addMesh(wheelGrp, cylinder(0.32, 0.32, 0.22, 16, wheelMat), [1.3, 0.88, -0.32]);
+      addMesh(wheelGrp, cylinder(0.32, 0.32, 0.22, 16, wheelMat), [-1.3, 0.88, -0.32]);
+      addMesh(wheelGrp, cylinder(0.32, 0.32, 0.22, 16, wheelMat), [1.3, -0.88, -0.32]);
+      addMesh(wheelGrp, cylinder(0.32, 0.32, 0.22, 16, wheelMat), [-1.3, -0.88, -0.32]);
       group.add(wheelGrp);
       break;
     }

@@ -15,7 +15,9 @@ function getHalfHeight(kind: string): number {
       return 0.7;
     case 'person':
       return 0;
-    case 'car': case 'sofa':
+    case 'car':
+      return 0;
+    case 'sofa':
       return 0.1;
     case 'house': case 'table': case 'chair': case 'cup':
     case 'tree': case 'bed': case 'fence':
