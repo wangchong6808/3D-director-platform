@@ -145,7 +145,7 @@ describe('GLB: buildThreeScene', () => {
     const scene = buildThreeScene([makeObj({ kind: 'person' })]);
     const person = scene.children[0] as THREE.Group;
     expect(person).toBeInstanceOf(THREE.Group);
-    expect(person.children.length).toBeGreaterThanOrEqual(4);
+    expect(person.children.length).toBeGreaterThanOrEqual(17);
   });
 });
 

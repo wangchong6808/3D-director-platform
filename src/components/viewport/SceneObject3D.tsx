@@ -30,30 +30,99 @@ function TorusGeom() {
 function CompoundObject({ kind, color }: { kind: string; color: string }) {
   const c = new THREE.Color(color);
   switch (kind) {
-    case 'person': return (
+    case 'person': {
+      const skin = '#FFD5B8';
+      const darken = c.clone().multiplyScalar(0.7);
+      return (
       <group>
-        <mesh position={[0, 1.4, 0]}>
-          <sphereGeometry args={[0.25, 16, 16]} />
+        {/* Head */}
+        <mesh position={[0, 1.68, 0]}>
+          <sphereGeometry args={[0.14, 20, 20]} />
+          <meshStandardMaterial color={skin} />
+        </mesh>
+        {/* Neck */}
+        <mesh position={[0, 1.56, 0]}>
+          <cylinderGeometry args={[0.05, 0.06, 0.1, 8]} />
+          <meshStandardMaterial color={skin} />
+        </mesh>
+        {/* Upper torso */}
+        <mesh position={[0, 1.36, 0]}>
+          <boxGeometry args={[0.42, 0.28, 0.22]} />
           <meshStandardMaterial color={color} />
         </mesh>
-        <mesh position={[0, 0.8, 0]}>
-          <cylinderGeometry args={[0.15, 0.15, 0.8, 8]} />
-          <meshStandardMaterial color={c.clone().multiplyScalar(0.7)} />
-        </mesh>
-        <mesh position={[0, 0.4, 0]}>
-          <boxGeometry args={[0.4, 0.6, 0.2]} />
+        {/* Lower torso */}
+        <mesh position={[0, 1.16, 0]}>
+          <boxGeometry args={[0.38, 0.18, 0.2]} />
           <meshStandardMaterial color={color} />
         </mesh>
-        <mesh position={[-0.22, 0.0, 0]}>
-          <cylinderGeometry args={[0.06, 0.06, 0.8, 8]} />
-          <meshStandardMaterial color={c.clone().multiplyScalar(0.7)} />
+        {/* Hips */}
+        <mesh position={[0, 0.98, 0]}>
+          <boxGeometry args={[0.4, 0.14, 0.2]} />
+          <meshStandardMaterial color={darken} />
         </mesh>
-        <mesh position={[0.22, 0.0, 0]}>
-          <cylinderGeometry args={[0.06, 0.06, 0.8, 8]} />
-          <meshStandardMaterial color={c.clone().multiplyScalar(0.7)} />
+        {/* Upper left leg */}
+        <mesh position={[-0.1, 0.75, 0]}>
+          <cylinderGeometry args={[0.09, 0.08, 0.38, 8]} />
+          <meshStandardMaterial color={darken} />
+        </mesh>
+        {/* Upper right leg */}
+        <mesh position={[0.1, 0.75, 0]}>
+          <cylinderGeometry args={[0.09, 0.08, 0.38, 8]} />
+          <meshStandardMaterial color={darken} />
+        </mesh>
+        {/* Lower left leg */}
+        <mesh position={[-0.1, 0.37, 0]}>
+          <cylinderGeometry args={[0.08, 0.07, 0.38, 8]} />
+          <meshStandardMaterial color={darken} />
+        </mesh>
+        {/* Lower right leg */}
+        <mesh position={[0.1, 0.37, 0]}>
+          <cylinderGeometry args={[0.08, 0.07, 0.38, 8]} />
+          <meshStandardMaterial color={darken} />
+        </mesh>
+        {/* Left foot */}
+        <mesh position={[-0.1, 0.04, 0.04]}>
+          <boxGeometry args={[0.12, 0.07, 0.22]} />
+          <meshStandardMaterial color="#333333" />
+        </mesh>
+        {/* Right foot */}
+        <mesh position={[0.1, 0.04, 0.04]}>
+          <boxGeometry args={[0.12, 0.07, 0.22]} />
+          <meshStandardMaterial color="#333333" />
+        </mesh>
+        {/* Upper left arm */}
+        <mesh position={[-0.28, 1.3, 0]}>
+          <cylinderGeometry args={[0.06, 0.055, 0.28, 8]} />
+          <meshStandardMaterial color={color} />
+        </mesh>
+        {/* Upper right arm */}
+        <mesh position={[0.28, 1.3, 0]}>
+          <cylinderGeometry args={[0.06, 0.055, 0.28, 8]} />
+          <meshStandardMaterial color={color} />
+        </mesh>
+        {/* Lower left arm */}
+        <mesh position={[-0.28, 1.0, 0]}>
+          <cylinderGeometry args={[0.055, 0.05, 0.28, 8]} />
+          <meshStandardMaterial color={skin} />
+        </mesh>
+        {/* Lower right arm */}
+        <mesh position={[0.28, 1.0, 0]}>
+          <cylinderGeometry args={[0.055, 0.05, 0.28, 8]} />
+          <meshStandardMaterial color={skin} />
+        </mesh>
+        {/* Left hand */}
+        <mesh position={[-0.28, 0.85, 0]}>
+          <sphereGeometry args={[0.05, 8, 8]} />
+          <meshStandardMaterial color={skin} />
+        </mesh>
+        {/* Right hand */}
+        <mesh position={[0.28, 0.85, 0]}>
+          <sphereGeometry args={[0.05, 8, 8]} />
+          <meshStandardMaterial color={skin} />
         </mesh>
       </group>
     );
+    }
     case 'house': return (
       <group>
         {/* Main body */}

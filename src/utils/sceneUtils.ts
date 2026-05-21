@@ -140,13 +140,27 @@ function objectToMesh(obj: SceneObject): THREE.Object3D {
     case 'torus':
       addMesh(group, torus(0.5, 0.2), [0, 0, 0]);
       break;
-    case 'person':
-      addMesh(group, sphere(0.25, 16, mat()), [0, 1.4, 0]);
-      addMesh(group, cylinder(0.15, 0.15, 0.8, 8, mat(darken)), [0, 0.8, 0]);
-      addMesh(group, box(0.4, 0.6, 0.2, mat()), [0, 0.4, 0]);
-      addMesh(group, cylinder(0.06, 0.06, 0.8, 8, mat(darken)), [-0.22, 0, 0]);
-      addMesh(group, cylinder(0.06, 0.06, 0.8, 8, mat(darken)), [0.22, 0, 0]);
+    case 'person': {
+      const skin = '#FFD5B8';
+      addMesh(group, sphere(0.14, 20, mat(skin)), [0, 1.68, 0]);
+      addMesh(group, cylinder(0.05, 0.06, 0.1, 8, mat(skin)), [0, 1.56, 0]);
+      addMesh(group, box(0.42, 0.28, 0.22, mat()), [0, 1.36, 0]);
+      addMesh(group, box(0.38, 0.18, 0.2, mat()), [0, 1.16, 0]);
+      addMesh(group, box(0.4, 0.14, 0.2, mat(darken)), [0, 0.98, 0]);
+      addMesh(group, cylinder(0.09, 0.08, 0.38, 8, mat(darken)), [-0.1, 0.75, 0]);
+      addMesh(group, cylinder(0.09, 0.08, 0.38, 8, mat(darken)), [0.1, 0.75, 0]);
+      addMesh(group, cylinder(0.08, 0.07, 0.38, 8, mat(darken)), [-0.1, 0.37, 0]);
+      addMesh(group, cylinder(0.08, 0.07, 0.38, 8, mat(darken)), [0.1, 0.37, 0]);
+      addMesh(group, box(0.12, 0.07, 0.22, mat('#333333')), [-0.1, 0.04, 0.04]);
+      addMesh(group, box(0.12, 0.07, 0.22, mat('#333333')), [0.1, 0.04, 0.04]);
+      addMesh(group, cylinder(0.06, 0.055, 0.28, 8, mat()), [-0.28, 1.3, 0]);
+      addMesh(group, cylinder(0.06, 0.055, 0.28, 8, mat()), [0.28, 1.3, 0]);
+      addMesh(group, cylinder(0.055, 0.05, 0.28, 8, mat(skin)), [-0.28, 1.0, 0]);
+      addMesh(group, cylinder(0.055, 0.05, 0.28, 8, mat(skin)), [0.28, 1.0, 0]);
+      addMesh(group, sphere(0.05, 8, mat(skin)), [-0.28, 0.85, 0]);
+      addMesh(group, sphere(0.05, 8, mat(skin)), [0.28, 0.85, 0]);
       break;
+    }
     case 'house':
       addMesh(group, box(1.2, 1.6, 0.9, mat()), [0, 0.8, 0]);
       addMesh(group, cone(0.9, 0.7, 4, mat(color.clone().multiplyScalar(0.55))), [0, 1.7, 0], [0, Math.PI / 4, 0]);
