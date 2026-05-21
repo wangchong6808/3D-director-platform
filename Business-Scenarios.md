@@ -1296,6 +1296,90 @@
 - **Then** B.occlusionIndex 为 0
 - **And** A.occlusionIndex 为 1
 
+### Scenario: 右键节点弹出上下文菜单
+
+- **ID:** TREE-021
+- **Given** 场景中有物体 A 和 B
+- **When** 用户在场景树中右键点击 A 的节点
+- **Then** 弹出上下文菜单
+- **And** 菜单中包含"显示/隐藏"选项
+- **And** 菜单中包含"删除"选项
+
+### Scenario: 右键可见物体显示"隐藏"选项
+
+- **ID:** TREE-022
+- **Given** 场景中有物体 A(visible=true)
+- **When** 用户在场景树中右键点击 A 的节点
+- **Then** 上下文菜单中显示"隐藏"选项
+
+### Scenario: 右键不可见物体显示"显示"选项
+
+- **ID:** TREE-023
+- **Given** 场景中有物体 A(visible=false)
+- **When** 用户在场景树中右键点击 A 的节点
+- **Then** 上下文菜单中显示"显示"选项
+
+### Scenario: 通过右键菜单隐藏物体
+
+- **ID:** TREE-024
+- **Given** 场景中有物体 A(visible=true)
+- **When** 用户右键点击 A 的节点并选择"隐藏"
+- **Then** 物体 A 的 visible 变为 false
+- **And** 视口中 A 不再渲染
+- **And** 场景树中 A 的图标更新为眼睛闭合图标
+- **And** 物体 A 被选中
+
+### Scenario: 通过右键菜单显示物体
+
+- **ID:** TREE-025
+- **Given** 场景中有物体 A(visible=false)
+- **When** 用户右键点击 A 的节点并选择"显示"
+- **Then** 物体 A 的 visible 变为 true
+- **And** 视口中 A 重新渲染
+- **And** 场景树中 A 的图标更新为眼睛睁开图标
+- **And** 物体 A 被选中
+
+### Scenario: 通过右键菜单删除物体
+
+- **ID:** TREE-026
+- **Given** 场景中有物体 A 和 B
+- **When** 用户右键点击 A 的节点并选择"删除"
+- **Then** 物体 A 从场景中移除
+- **And** 场景树中 A 的节点消失
+- **And** 视口中 A 的 mesh 消失
+- **And** 历史栈新增一条删除记录
+
+### Scenario: 右键删除后可通过撤销恢复
+
+- **ID:** TREE-027
+- **Given** 场景中有物体 A
+- **When** 用户右键点击 A 的节点选择"删除"，然后执行撤销
+- **Then** 物体 A 重新出现在场景中
+- **And** A 的所有属性完整恢复
+
+### Scenario: 右键菜单删除选项标记为危险样式
+
+- **ID:** TREE-028
+- **Given** 场景中有物体 A
+- **When** 用户右键点击 A 的节点
+- **Then** 上下文菜单中"删除"选项以危险样式（红色）显示
+
+### Scenario: 双击重命名时右键菜单不弹出
+
+- **ID:** TREE-029
+- **Given** 用户已双击 A 的节点进入重命名编辑模式
+- **When** 用户在编辑框中右键点击
+- **Then** 不弹出物体操作的上下文菜单
+- **And** 显示浏览器默认的文本编辑右键菜单
+
+### Scenario: 右键菜单操作后记录历史
+
+- **ID:** TREE-030
+- **Given** 场景中有物体 A(visible=true)
+- **When** 用户通过右键菜单隐藏 A
+- **Then** 历史栈新增一条记录
+- **And** 可通过撤销恢复 A 的可见状态
+
 ---
 
 ## Feature: 属性面板（PropertyPanel）

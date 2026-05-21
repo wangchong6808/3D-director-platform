@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
-import { Tree, Button, Input, Space } from 'antd';
-import { SearchOutlined, VerticalAlignTopOutlined, VerticalAlignBottomOutlined, UpOutlined, DownOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Tree, Button, Input, Space, Dropdown } from 'antd';
+import type { MenuProps } from 'antd';
+import { SearchOutlined, VerticalAlignTopOutlined, VerticalAlignBottomOutlined, UpOutlined, DownOutlined, DeleteOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 import { useSceneStore } from '../../store/sceneStore';
 import type { SceneObject } from '../../types';
 import type { DataNode, EventDataNode } from 'antd/es/tree';
@@ -94,8 +95,9 @@ export default function SceneTree() {
             blockNode
             style={{ background: 'transparent', color: '#ccc' }}
             titleRender={(node) => {
+              const obj = objects.find(o => o.id === node.key);
+
               if (node.key === editingKey) {
-                const obj = objects.find(o => o.id === node.key);
                 return (
                   <span className="scene-tree-rename-input">
                     <Input
@@ -109,7 +111,62 @@ export default function SceneTree() {
                   </span>
                 );
               }
-              return <span>{node.title as string}</span>;
+
+              const menuItems: MenuProps['items'] = [
+                {
+                  key: 'toggle-visibility',
+                  label: obj?.visible ? '隐藏' : '显示',
+                  onClick: () => {
+                    if (!obj) return;
+                    selectObject(obj.id);
+                    saveHistory();
+                    updateObject(obj.id, { visible: !obj.visible });
+                  },
+                },
+                {
+                  key: 'delete',
+                  label: '删除',
+                  danger: true,
+                  onClick: () => {
+                    if (!obj) return;
+                    removeObject(obj.id);
+                  },
+                },
+              ];
+
+              return (
+                <Dropdown menu={{ items: menuItems }} trigger={['contextMenu']}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span>{node.title as string}</span>
+                    <span style={{ display: 'flex', gap: 0, flexShrink: 0 }}>
+                      <Button
+                        type="text"
+                        size="small"
+                        icon={obj?.visible ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!obj) return;
+                          saveHistory();
+                          updateObject(obj.id, { visible: !obj.visible });
+                        }}
+                        style={{ color: obj?.visible ? undefined : '#666', fontSize: 12, width: 22, height: 22, padding: 0 }}
+                      />
+                      <Button
+                        type="text"
+                        size="small"
+                        danger
+                        icon={<DeleteOutlined />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!obj) return;
+                          removeObject(obj.id);
+                        }}
+                        style={{ fontSize: 12, width: 22, height: 22, padding: 0 }}
+                      />
+                    </span>
+                  </div>
+                </Dropdown>
+              );
             }}
           />
         )}
